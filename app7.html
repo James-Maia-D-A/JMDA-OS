@@ -3,584 +3,497 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CALC_NET // CYBERNETIC COMPUTATION SYSTEM</title>
+    <title>Painel de Estoque - HUD Minimalista</title>
     <style>
-        :root {
-            --bg-deep: #050508;
-            --bg-panel: #0b0c16;
-            --border-color: #1f223f;
-            --neon-cyan: #00f3ff;
-            --neon-pink: #ff0055;
-            --neon-yellow: #f4ee00;
-            --neon-green: #00ff66;
-            --text-main: #c0d2ff;
-            --text-dim: #505c8a;
-            --shadow-cyan: 0 0 10px rgba(0, 243, 255, 0.3);
-            --shadow-pink: 0 0 10px rgba(255, 0, 85, 0.3);
-        }
-
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Courier New', Courier, monospace;
+            box-sizing: border-box;
         }
 
         body {
-            background-color: var(--bg-deep);
-            color: var(--text-main);
+            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #000;
+            padding: 20px;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow-x: hidden;
-            padding: 20px;
-            background-image: 
-                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            background-size: 100% 4px, 6px 100%;
         }
 
-        .cyber-frame {
-            background: var(--bg-panel);
-            border: 2px solid var(--neon-cyan);
-            box-shadow: var(--shadow-cyan), inset 0 0 20px rgba(0, 243, 255, 0.05);
-            width: 100%;
-            max-width: 650px;
-            position: relative;
-            padding: 20px;
-            clip-path: polygon(
-                0 0, 
-                calc(100% - 15px) 0, 
-                100% 15px, 
-                100% 100%, 
-                15px 100%, 
-                0 calc(100% - 15px)
-            );
-            transition: all 0.3s ease;
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
         }
 
-        .cyber-frame::before {
-            content: "SYS.VER // 4.08-X";
-            position: absolute;
-            top: -10px;
-            left: 20px;
-            background: var(--bg-deep);
-            padding: 0 10px;
-            font-size: 10px;
-            color: var(--neon-cyan);
-            letter-spacing: 2px;
-        }
-
-        /* Mode Selector Header */
-        .mode-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 1px dashed var(--border-color);
-            padding-bottom: 15px;
-        }
-
-        .mode-btn {
-            background: transparent;
-            border: 1px solid var(--text-dim);
-            color: var(--text-dim);
-            padding: 8px 15px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.2s;
-            clip-path: polygon(0 0, 90% 0, 100% 30%, 100% 100%, 10% 100%, 0 70%);
-        }
-
-        .mode-btn:hover {
-            border-color: var(--neon-cyan);
-            color: var(--neon-cyan);
-        }
-
-        .mode-btn.active {
-            background: rgba(0, 243, 255, 0.1);
-            border-color: var(--neon-cyan);
-            color: var(--neon-cyan);
-            box-shadow: var(--shadow-cyan);
-        }
-
-        /* Display Screen */
-        .display-container {
-            background: #020308;
-            border: 1px solid var(--border-color);
-            padding: 15px;
-            margin-bottom: 20px;
-            position: relative;
-            text-align: right;
-            min-height: 90px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-        }
-
-        .display-container::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0, 243, 255, 0.02) 50%);
-            background-size: 100% 3px;
-            pointer-events: none;
-        }
-
-        .history-screen {
-            font-size: 12px;
-            color: var(--text-dim);
-            min-height: 18px;
-            word-break: break-all;
-        }
-
-        .main-screen {
-            font-size: 28px;
-            color: var(--neon-cyan);
-            font-weight: bold;
-            word-break: break-all;
-            text-shadow: 0 0 8px rgba(0, 243, 255, 0.4);
-        }
-
-        /* Layout Panels */
-        .calc-panel {
-            display: none;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-
-        .calc-panel.active {
-            display: grid;
-        }
-
-        /* Special Layouts */
-        .calc-panel.scientific {
-            grid-template-columns: repeat(6, 1fr);
-        }
-
-        .calc-panel.dev {
-            grid-template-columns: repeat(4, 1fr);
-        }
-
-        /* Cyber Buttons */
-        .c-btn {
-            background: #0d0f1f;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 14px 10px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.1s ease;
+        header {
             text-align: center;
-            font-weight: bold;
-            user-select: none;
+            margin-bottom: 40px;
+            position: relative;
         }
 
-        .c-btn:hover {
-            border-color: var(--neon-cyan);
-            color: var(--neon-cyan);
-            background: rgba(0, 243, 255, 0.05);
-            box-shadow: var(--shadow-cyan);
+        .titulo {
+            font-size: 2.5em;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #000 0%, #333 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .c-btn:active {
-            transform: scale(0.96);
+        .subtitulo {
+            font-size: 0.9em;
+            color: #666;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
-        .c-btn.op {
-            border-color: rgba(255, 0, 85, 0.4);
-            color: var(--neon-pink);
-        }
-        .c-btn.op:hover {
-            border-color: var(--neon-pink);
-            background: rgba(255, 0, 85, 0.1);
-            box-shadow: var(--shadow-pink);
+        /* Linha decorativa */
+        .linha-decorativa {
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #000, transparent);
+            margin: 20px auto 30px;
         }
 
-        .c-btn.func {
-            border-color: rgba(244, 238, 0, 0.4);
-            color: var(--neon-yellow);
-            font-size: 13px;
-        }
-        .c-btn.func:hover {
-            border-color: var(--neon-yellow);
-            background: rgba(244, 238, 0, 0.1);
-            box-shadow: 0 0 10px rgba(244, 238, 0, 0.3);
-        }
-
-        .c-btn.equals {
-            background: rgba(0, 243, 255, 0.15);
-            border-color: var(--neon-cyan);
-            color: var(--neon-cyan);
-            grid-column: span 2;
+        /* Seção de entrada */
+        .secao-entrada {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+            backdrop-filter: blur(10px);
         }
 
-        .c-btn.span-2 {
-            grid-column: span 2;
+        .forma-grupo {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            align-items: flex-end;
         }
 
-        /* Dev Mode Specific Styles */
-        .dev-subdisplay {
-            background: #020308;
-            border: 1px solid var(--border-color);
-            padding: 8px;
-            margin-bottom: 12px;
-            font-size: 12px;
+        .input-wrapper {
             display: flex;
-            justify-content: space-between;
-            color: var(--text-dim);
+            flex-direction: column;
         }
 
-        .dev-subdisplay span {
-            color: var(--neon-green);
+        label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #000;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
 
-        .disabled {
-            opacity: 0.3;
-            pointer-events: none;
+        input {
+            padding: 12px 16px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+            color: #000;
         }
 
-        /* Footer Decors */
-        .cyber-footer {
-            margin-top: 15px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            color: var(--text-dim);
+        input:focus {
+            outline: none;
+            border-color: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+            background: #fff;
+        }
+
+        input::placeholder {
+            color: #999;
+        }
+
+        button.adicionar {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #000 0%, #333 100%);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button.adicionar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        button.adicionar:active {
+            transform: translateY(0);
+        }
+
+        /* Seção de lista */
+        .secao-lista {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+            backdrop-filter: blur(10px);
+        }
+
+        .titulo-lista {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 20px;
             letter-spacing: 1px;
         }
 
-        .status-dot {
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            background: var(--neon-green);
-            box-shadow: 0 0 5px var(--neon-green);
-            border-radius: 50%;
-            margin-right: 5px;
-            animation: pulse 1.5s infinite;
+        .lista-produtos {
+            list-style: none;
         }
 
-        @keyframes pulse {
-            0% { opacity: 0.3; }
-            50% { opacity: 1; }
-            100% { opacity: 0.3; }
+        .item-produto {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-left-width: 4px;
+        }
+
+        .item-produto:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .info-produto {
+            flex: 1;
+        }
+
+        .nome-produto {
+            font-weight: 600;
+            font-size: 1.05em;
+            margin-bottom: 5px;
+        }
+
+        .data-produto {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        /* Cores por status */
+        .status-ok {
+            border-left-color: #2563eb;
+            background: rgba(37, 99, 235, 0.08);
+        }
+
+        .status-ok .nome-produto {
+            color: #1e40af;
+        }
+
+        .status-proximo {
+            border-left-color: #16a34a;
+            background: rgba(22, 163, 74, 0.08);
+        }
+
+        .status-proximo .nome-produto {
+            color: #15803d;
+        }
+
+        .status-hoje {
+            border-left-color: #ea580c;
+            background: rgba(234, 88, 12, 0.12);
+        }
+
+        .status-hoje .nome-produto {
+            color: #c2410c;
+            font-weight: 700;
+        }
+
+        .status-vencido {
+            border-left-color: #dc2626;
+            background: rgba(220, 38, 38, 0.12);
+        }
+
+        .status-vencido .nome-produto {
+            color: #b91c1c;
+            font-weight: 700;
+        }
+
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75em;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-top: 6px;
+            width: fit-content;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-ok {
+            background: rgba(37, 99, 235, 0.2);
+            color: #1e40af;
+        }
+
+        .badge-proximo {
+            background: rgba(22, 163, 74, 0.2);
+            color: #15803d;
+        }
+
+        .badge-hoje {
+            background: rgba(234, 88, 12, 0.2);
+            color: #c2410c;
+        }
+
+        .badge-vencido {
+            background: rgba(220, 38, 38, 0.2);
+            color: #b91c1c;
+        }
+
+        .btn-remover {
+            padding: 8px 14px;
+            background: rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            color: #666;
+            font-weight: 600;
+            margin-left: 15px;
+        }
+
+        .btn-remover:hover {
+            background: rgba(220, 38, 38, 0.15);
+            color: #b91c1c;
+            border-color: rgba(220, 38, 38, 0.3);
+        }
+
+        /* Mensagem vazia */
+        .mensagem-vazia {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 1em;
+            letter-spacing: 0.5px;
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .forma-grupo {
+                grid-template-columns: 1fr;
+            }
+
+            .titulo {
+                font-size: 1.8em;
+            }
+
+            .item-produto {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .btn-remover {
+                margin-left: 0;
+                margin-top: 12px;
+                width: 100%;
+            }
+        }
+
+        /* Animação de entrada */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .item-produto {
+            animation: slideIn 0.3s ease;
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <header>
+            <div class="titulo">PAINEL DE ESTOQUE</div>
+            <div class="subtitulo">Controle de Validade em Tempo Real</div>
+            <div class="linha-decorativa"></div>
+        </header>
 
-    <div class="cyber-frame">
-        <!-- Selector de Módulos -->
-        <div class="mode-selector">
-            <button class="mode-btn active" onclick="switchMode('basic', this)">Básica</button>
-            <button class="mode-btn" onclick="switchMode('scientific', this)">Científica</button>
-            <button class="mode-btn" onclick="switchMode('dev', this)">Programador</button>
-            <button class="mode-btn" onclick="switchMode('financial', this)">Financeira</button>
-        </div>
-
-        <!-- Tela de Exibição Compartilhada -->
-        <div class="display-container">
-            <div class="history-screen" id="history"></div>
-            <div class="main-screen" id="display">0</div>
-        </div>
-
-        <!-- MODO: BÁSICO -->
-        <div id="panel-basic" class="calc-panel active">
-            <button class="c-btn func" onclick="clearAll()">AC</button>
-            <button class="c-btn func" onclick="deleteChar()">DEL</button>
-            <button class="c-btn op" onclick="appendValue('%')">%</button>
-            <button class="c-btn op" onclick="appendValue('/')">÷</button>
-            
-            <button class="c-btn" onclick="appendValue('7')">7</button>
-            <button class="c-btn" onclick="appendValue('8')">8</button>
-            <button class="c-btn" onclick="appendValue('9')">9</button>
-            <button class="c-btn op" onclick="appendValue('*')">×</button>
-            
-            <button class="c-btn" onclick="appendValue('4')">4</button>
-            <button class="c-btn" onclick="appendValue('5')">5</button>
-            <button class="c-btn" onclick="appendValue('6')">6</button>
-            <button class="c-btn op" onclick="appendValue('-')">-</button>
-            
-            <button class="c-btn" onclick="appendValue('1')">1</button>
-            <button class="c-btn" onclick="appendValue('2')">2</button>
-            <button class="c-btn" onclick="appendValue('3')">3</button>
-            <button class="c-btn op" onclick="appendValue('+')">+</button>
-            
-            <button class="c-btn span-2" onclick="appendValue('0')">0</button>
-            <button class="c-btn" onclick="appendValue('.')">.</button>
-            <button class="c-btn equals" onclick="calculate()">=</button>
-        </div>
-
-        <!-- MODO: CIENTÍFICO -->
-        <div id="panel-scientific" class="calc-panel scientific">
-            <button class="c-btn func" onclick="clearAll()">AC</button>
-            <button class="c-btn func" onclick="deleteChar()">DEL</button>
-            <button class="c-btn func" onclick="appendValue('(')">(</button>
-            <button class="c-btn func" onclick="appendValue(')')">)</button>
-            <button class="c-btn op" onclick="appendValue('**')">x^y</button>
-            <button class="c-btn op" onclick="appendValue('/')">÷</button>
-
-            <button class="c-btn func" onclick="applyFunc('sin')">sin</button>
-            <button class="c-btn func" onclick="applyFunc('cos')">cos</button>
-            <button class="c-btn func" onclick="applyFunc('tan')">tan</button>
-            <button class="c-btn" onclick="appendValue('7')">7</button>
-            <button class="c-btn" onclick="appendValue('8')">8</button>
-            <button class="c-btn" onclick="appendValue('9')">9</button>
-            <button class="c-btn op" onclick="appendValue('*')">×</button>
-
-            <button class="c-btn func" onclick="applyFunc('log')">log</button>
-            <button class="c-btn func" onclick="applyFunc('ln')">ln</button>
-            <button class="c-btn func" onclick="applyFunc('sqrt')">√</button>
-            <button class="c-btn" onclick="appendValue('4')">4</button>
-            <button class="c-btn" onclick="appendValue('5')">5</button>
-            <button class="c-btn" onclick="appendValue('6')">6</button>
-            <button class="c-btn op" onclick="appendValue('-')">-</button>
-
-            <button class="c-btn func" onclick="appendValue('Math.PI')">π</button>
-            <button class="c-btn func" onclick="appendValue('Math.E')">e</button>
-            <button class="c-btn func" onclick="applyFunc('fact')">n!</button>
-            <button class="c-btn" onclick="appendValue('1')">1</button>
-            <button class="c-btn" onclick="appendValue('2')">2</button>
-            <button class="c-btn" onclick="appendValue('3')">3</button>
-            <button class="c-btn op" onclick="appendValue('+')">+</button>
-
-            <button class="c-btn span-2" onclick="appendValue('0')">0</button>
-            <button class="c-btn" onclick="appendValue('.')">.</button>
-            <button class="c-btn equals" style="grid-column: span 3;" onclick="calculate()">=</button>
-        </div>
-
-        <!-- MODO: PROGRAMADOR / DEV -->
-        <div id="panel-dev" class="calc-panel dev">
-            <div style="grid-column: span 4;">
-                <div class="dev-subdisplay">
-                    HEX: <span id="val-hex">0</span>
-                    DEC: <span id="val-dec">0</span>
-                    BIN: <span id="val-bin">0</span>
+        <div class="secao-entrada">
+            <form id="formProduto" class="forma-grupo">
+                <div class="input-wrapper">
+                    <label for="nomeProduto">Nome do Produto</label>
+                    <input 
+                        type="text" 
+                        id="nomeProduto" 
+                        placeholder="Ex: Leite, Iogurte, Pão..."
+                        required
+                    >
                 </div>
-            </div>
-            <button class="c-btn func" onclick="setDevBase('HEX')">HEX</button>
-            <button class="c-btn func" onclick="setDevBase('DEC')">DEC</button>
-            <button class="c-btn func" onclick="setDevBase('OCT')">OCT</button>
-            <button class="c-btn func" onclick="setDevBase('BIN')">BIN</button>
-
-            <button class="c-btn dev-key" onclick="appendDev('A')">A</button>
-            <button class="c-btn dev-key" onclick="appendDev('B')">B</button>
-            <button class="c-btn func" onclick="clearAll()">AC</button>
-            <button class="c-btn func" onclick="deleteChar()">DEL</button>
-
-            <button class="c-btn dev-key" onclick="appendDev('C')">C</button>
-            <button class="c-btn dev-key" onclick="appendDev('D')">D</button>
-            <button class="c-btn" onclick="appendDev('7')">7</button>
-            <button class="c-btn" onclick="appendDev('8')">8</button>
-
-            <button class="c-btn dev-key" onclick="appendDev('E')">E</button>
-            <button class="c-btn dev-key" onclick="appendDev('F')">F</button>
-            <button class="c-btn" onclick="appendDev('4')">4</button>
-            <button class="c-btn" onclick="appendDev('5')">5</button>
-
-            <button class="c-btn op" onclick="bitwiseOp('&')">AND</button>
-            <button class="c-btn op" onclick="bitwiseOp('|')">OR</button>
-            <button class="c-btn" onclick="appendDev('1')">1</button>
-            <button class="c-btn" onclick="appendDev('2')">2</button>
-
-            <button class="c-btn op" onclick="bitwiseOp('^')">XOR</button>
-            <button class="c-btn op" onclick="bitwiseOp('~')">NOT</button>
-            <button class="c-btn" onclick="appendDev('0')">0</button>
-            <button class="c-btn equals" onclick="calculateDev()">=</button>
+                <div class="input-wrapper">
+                    <label for="dataValidade">Data de Validade</label>
+                    <input 
+                        type="date" 
+                        id="dataValidade"
+                        required
+                    >
+                </div>
+                <button type="submit" class="adicionar">+ Adicionar</button>
+            </form>
         </div>
 
-        <!-- MODO: FINANCEIRO -->
-        <div id="panel-financial" class="calc-panel" style="grid-template-columns: repeat(2, 1fr);">
-            <div style="grid-column: span 2; font-size: 12px; color: var(--neon-yellow); margin-bottom: 5px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">
-                SIMULADOR DE JUROS COMPOSTOS (CYBER_FIN)
-            </div>
-            <div style="font-size: 12px; color: var(--text-dim); display:flex; flex-direction:column; gap:5px; grid-column: span 2;">
-                <label>Capital Inicial (R$): <input type="number" id="fin-pv" value="1000" style="background:#020308; border:1px solid var(--border-color); color:var(--text-main); padding:5px;"></label>
-                <label>Taxa de Juros Mensal (%): <input type="number" id="fin-i" value="1.5" style="background:#020308; border:1px solid var(--border-color); color:var(--text-main); padding:5px;"></label>
-                <label>Período (Meses): <input type="number" id="fin-n" value="12" style="background:#020308; border:1px solid var(--border-color); color:var(--text-main); padding:5px;"></label>
-            </div>
-            <button class="c-btn equals" style="grid-column: span 2; margin-top: 10px;" onclick="calculateFinancial()">Calcular Rendimento</button>
-        </div>
-
-        <div class="cyber-footer">
-            <div><span class="status-dot"></span>CORE STATUS: ONLINE</div>
-            <div>SECURE_CALC_UNIT</div>
+        <div class="secao-lista">
+            <div class="titulo-lista">Produtos em Estoque</div>
+            <ul class="lista-produtos" id="listaProdutos">
+                <div class="mensagem-vazia">Nenhum produto adicionado ainda</div>
+            </ul>
         </div>
     </div>
 
     <script>
-        let currentMode = 'basic';
-        let currentExpression = '';
-        let historyExpression = '';
-        
-        // Configurações do modo Programador
-        let devBase = 'DEC';
-        let devValue = 0;
+        // Recuperar produtos do localStorage
+        let produtos = JSON.parse(localStorage.getItem('produtos')) || [];
 
-        function updateDisplay() {
-            document.getElementById('display').innerText = currentExpression === '' ? '0' : currentExpression;
-            document.getElementById('history').innerText = historyExpression;
-        }
+        // Elementos do DOM
+        const formProduto = document.getElementById('formProduto');
+        const nomeProdutoInput = document.getElementById('nomeProduto');
+        const dataValidadeInput = document.getElementById('dataValidade');
+        const listaProdutos = document.getElementById('listaProdutos');
 
-        function switchMode(mode, btnElement) {
-            currentMode = mode;
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            btnElement.classList.add('active');
+        // Função para calcular o status baseado na data
+        function calcularStatus(dataValidade) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
 
-            document.querySelectorAll('.calc-panel').forEach(p => p.classList.remove('active'));
-            document.getElementById('panel-' + mode).classList.add('active');
+            const data = new Date(dataValidade + 'T00:00:00');
 
-            clearAll();
-        }
+            const diferenca = Math.floor((data - hoje) / (1000 * 60 * 60 * 24));
 
-        function appendValue(val) {
-            currentExpression += val;
-            updateDisplay();
-        }
-
-        function clearAll() {
-            currentExpression = '';
-            historyExpression = '';
-            updateDisplay();
-            if(currentMode === 'dev') {
-                devValue = 0;
-                updateDevDisplays(0);
+            if (diferenca < 0) {
+                return { status: 'vencido', dias: diferenca, label: '☠️ Vencido' };
+            } else if (diferenca === 0) {
+                return { status: 'hoje', dias: 0, label: '⚠️ Vence Hoje' };
+            } else if (diferenca <= 7) {
+                return { status: 'proximo', dias: diferenca, label: `📅 Vence em ${diferenca}d` };
+            } else {
+                return { status: 'ok', dias: diferenca, label: `✓ ${diferenca} dias` };
             }
         }
 
-        function deleteChar() {
-            currentExpression = currentExpression.toString().slice(0, -1);
-            updateDisplay();
-        }
-
-        function applyFunc(func) {
-            try {
-                let val = eval(currentExpression);
-                if (isNaN(val)) throw Error();
-                let res = 0;
-                switch(func) {
-                    case 'sin': res = Math.sin(val); break;
-                    case 'cos': res = Math.cos(val); break;
-                    case 'tan': res = Math.tan(val); break;
-                    case 'log': res = Math.log10(val); break;
-                    case 'ln': res = Math.log(val); break;
-                    case 'sqrt': res = Math.sqrt(val); break;
-                    case 'fact': 
-                        res = 1;
-                        for (let i = 2; i <= val; i++) res *= i;
-                        break;
-                }
-                historyExpression = `${func}(${val})`;
-                currentExpression = res.toString();
-                updateDisplay();
-            } catch(e) {
-                currentExpression = 'ERR_SYNTAX';
-                updateDisplay();
-                setTimeout(clearAll, 1200);
-            }
-        }
-
-        function calculate() {
-            try {
-                let sanitized = currentExpression.replace(/×/g, '*').replace(/÷/g, '/');
-                historyExpression = currentExpression;
-                let result = eval(sanitized);
-                if (!isFinite(result)) throw Error();
-                currentExpression = Number(result.toFixed(8)).toString();
-                updateDisplay();
-            } catch (err) {
-                currentExpression = 'ERR_CALC';
-                updateDisplay();
-                setTimeout(clearAll, 1200);
-            }
-        }
-
-        // Lógica Avançada do Modo Programador
-        function setDevBase(base) {
-            devBase = base;
-            // Habilitar/Desabilitar botões hexadecimais baseado na base
-            const keys = document.querySelectorAll('.dev-key');
-            keys.forEach(k => {
-                if(base === 'DEC') {
-                    if(['A','B','C','D','E','F'].includes(k.innerText)) k.classList.add('disabled');
-                    else k.classList.remove('disabled');
-                } else if(base === 'BIN') {
-                    if(!['0','1'].includes(k.innerText)) k.classList.add('disabled');
-                    else k.classList.remove('disabled');
-                } else if(base === 'OCT') {
-                    if(['8','9','A','B','C','D','E','F'].includes(k.innerText)) k.classList.add('disabled');
-                    else k.classList.remove('disabled');
-                } else {
-                    k.classList.remove('disabled');
-                }
+        // Função para formatar data
+        function formatarData(data) {
+            const date = new Date(data + 'T00:00:00');
+            return date.toLocaleDateString('pt-BR', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric' 
             });
         }
 
-        function appendDev(char) {
-            currentExpression += char;
-            updateDevLiveValue();
+        // Função para adicionar produto
+        function adicionarProduto(nome, dataValidade) {
+            const produto = {
+                id: Date.now(),
+                nome: nome,
+                dataValidade: dataValidade
+            };
+
+            produtos.push(produto);
+            salvarProdutos();
+            renderizarLista();
+            formProduto.reset();
+            nomeProdutoInput.focus();
         }
 
-        function updateDevLiveValue() {
-            try {
-                if(currentExpression === '') {
-                    updateDevDisplays(0);
-                    return;
-                }
-                let radix = 10;
-                if(devBase === 'HEX') radix = 16;
-                if(devBase === 'BIN') radix = 2;
-                if(devBase === 'OCT') radix = 8;
-
-                devValue = parseInt(currentExpression, radix) || 0;
-                updateDevDisplays(devValue);
-            } catch(e) {}
-            document.getElementById('display').innerText = currentExpression;
+        // Função para remover produto
+        function removerProduto(id) {
+            produtos = produtos.filter(p => p.id !== id);
+            salvarProdutos();
+            renderizarLista();
         }
 
-        function updateDevDisplays(val) {
-            document.getElementById('val-hex').innerText = val.toString(16).toUpperCase();
-            document.getElementById('val-dec').innerText = val.toString(10);
-            document.getElementById('val-bin').innerText = val.toString(2);
+        // Função para salvar no localStorage
+        function salvarProdutos() {
+            localStorage.setItem('produtos', JSON.stringify(produtos));
         }
 
-        function bitwiseOp(op) {
-            currentExpression += ` ${op} `;
-            updateDisplay();
-        }
-
-        function calculateDev() {
-            try {
-                let res = eval(currentExpression);
-                devValue = res;
-                currentExpression = res.toString(devBase === 'HEX' ? 16 : devBase === 'BIN' ? 2 : 10).toUpperCase();
-                updateDevDisplays(devValue);
-                updateDisplay();
-            } catch(e) {
-                currentExpression = 'ERR_DEV';
-                updateDisplay();
-                setTimeout(clearAll, 1200);
+        // Função para renderizar a lista
+        function renderizarLista() {
+            if (produtos.length === 0) {
+                listaProdutos.innerHTML = '<div class="mensagem-vazia">Nenhum produto adicionado ainda</div>';
+                return;
             }
+
+            // Ordenar produtos por urgência
+            const produtosOrdenados = [...produtos].sort((a, b) => {
+                const statusA = calcularStatus(a.dataValidade);
+                const statusB = calcularStatus(b.dataValidade);
+
+                const ordemStatus = { 'vencido': 0, 'hoje': 1, 'proximo': 2, 'ok': 3 };
+
+                if (ordemStatus[statusA.status] !== ordemStatus[statusB.status]) {
+                    return ordemStatus[statusA.status] - ordemStatus[statusB.status];
+                }
+
+                return statusA.dias - statusB.dias;
+            });
+
+            listaProdutos.innerHTML = produtosOrdenados.map(produto => {
+                const statusInfo = calcularStatus(produto.dataValidade);
+
+                return `
+                    <li class="item-produto status-${statusInfo.status}">
+                        <div class="info-produto">
+                            <div class="nome-produto">${produto.nome}</div>
+                            <div class="data-produto">Válido até: ${formatarData(produto.dataValidade)}</div>
+                            <div class="badge-status badge-${statusInfo.status}">
+                                ${statusInfo.label}
+                            </div>
+                        </div>
+                        <button type="button" class="btn-remover" onclick="removerProduto(${produto.id})">
+                            Remover
+                        </button>
+                    </li>
+                `;
+            }).join('');
         }
 
-        // Lógica Financeira
-        function calculateFinancial() {
-            let pv = parseFloat(document.getElementById('fin-pv').value) || 0;
-            let i = (parseFloat(document.getElementById('fin-i').value) || 0) / 100;
-            let n = parseFloat(document.getElementById('fin-n').value) || 0;
+        // Event listeners
+        formProduto.addEventListener('submit', (e) => {
+            e.preventDefault();
 
-            let fv = pv * Math.pow((1 + i), n);
-            let profit = fv - pv;
+            const nome = nomeProdutoInput.value.trim();
+            const dataValidade = dataValidadeInput.value;
 
-            historyExpression = `PV: R$${pv} | i:${i*100}% | n:${n}m`;
-            currentExpression = `FV: R$${fv.toFixed(2)} (Lucro: R$${profit.toFixed(2)})`;
-            updateDisplay();
-        }
+            if (nome && dataValidade) {
+                adicionarProduto(nome, dataValidade);
+            }
+        });
+
+        // Renderizar lista ao carregar a página
+        renderizarLista();
+
+        // Atualizar a cada minuto para refletir mudanças de status
+        setInterval(() => {
+            renderizarLista();
+        }, 60000);
     </script>
 </body>
 </html>
