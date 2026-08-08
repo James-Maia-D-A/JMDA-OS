@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUDI_NET // CYBERNETIC MUSIC DECK</title>
+    <style>
+        :root {
+            --bg-deep: #050508;
+            --bg-panel: #0b0c16;
+            --border-color: #1f223f;
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff0055;
+            --neon-yellow: #f4ee00;
+            --neon-green: #00ff66;
+            --text-main: #c0d2ff;
+            --text-dim: #505c8a;
+            --shadow-cyan: 0 0 10px rgba(0, 243, 255, 0.3);
+            --shadow-pink: 0 0 10px rgba(255, 0, 85, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 20px;
+            background-image: 
+                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 4px, 6px 100%;
+        }
+
+        .cyber-frame {
+            background: var(--bg-panel);
+            border: 2px solid var(--neon-cyan);
+            box-shadow: var(--shadow-cyan), inset 0 0 20px rgba(0, 243, 255, 0.05);
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+            padding: 20px;
+            clip-path: polygon(
+                0 0, 
+                calc(100% - 15px) 0, 
+                100% 15px, 
+                100% 100%, 
+                15px 100%, 
+                0 calc(100% - 15px)
+            );
+        }
+
+        .cyber-frame::before {
+            content: "AUDIO_SYS.VER // 2.07-X";
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: var(--bg-deep);
+            padding: 0 10px;
+            font-size: 10px;
+            color: var(--neon-cyan);
+            letter-spacing: 2px;
+        }
+
+        /* Layout Principal Grid */
+        .player-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media(max-width: 768px) {
+            .player-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Painel Esquerdo: Visualizador e Info */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .visualizer-container {
+            background: #020308;
+            border: 1px solid var(--border-color);
+            height: 180px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .visualizer-container::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0, 243, 255, 0.02) 50%);
+            background-size: 100% 3px;
+            pointer-events: none;
+        }
+
+        #canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .track-info {
+            background: #020308;
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            font-size: 12px;
+        }
+
+        .track-title {
+            color: var(--neon-cyan);
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-shadow: 0 0 5px rgba(0, 243, 255, 0.4);
+        }
+
+        .track-artist {
+            color: var(--text-dim);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Controles de Reprodução */
+        .controls-box {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        .progress-bar {
+            flex-grow: 1;
+            background: #020308;
+            border: 1px solid var(--border-color);
+            height: 8px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: var(--neon-cyan);
+            height: 100%;
+            width: 0%;
+            box-shadow: var(--shadow-cyan);
+            transition: width 0.1s linear;
+        }
+
+        .main-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .c-btn {
+            background: #0d0f1f;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .c-btn:hover {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            background: rgba(0, 243, 255, 0.05);
+            box-shadow: var(--shadow-cyan);
+        }
+
+        .c-btn.action-btn {
+            border-color: rgba(255, 0, 85, 0.4);
+            color: var(--neon-pink);
+            font-size: 16px;
+            padding: 10px 20px;
+        }
+        .c-btn.action-btn:hover {
+            border-color: var(--neon-pink);
+            background: rgba(255, 0, 85, 0.1);
+            box-shadow: var(--shadow-pink);
+        }
+
+        .secondary-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .volume-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type=range] {
+            accent-color: var(--neon-cyan);
+            background: #020308;
+        }
+
+        /* Painel Direito: Playlist e Entrada de Arquivos */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .source-selectors {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .file-label {
+            background: #0d0f1f;
+            border: 1px solid var(--neon-yellow);
+            color: var(--neon-yellow);
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.2s;
+            display: block;
+        }
+
+        .file-label:hover {
+            background: rgba(244, 238, 0, 0.1);
+            box-shadow: 0 0 10px rgba(244, 238, 0, 0.3);
+        }
+
+        .playlist-container {
+            background: #020308;
+            border: 1px solid var(--border-color);
+            height: 260px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .playlist-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-dim);
+            transition: all 0.1s;
+        }
+
+        .playlist-item:hover {
+            background: rgba(0, 243, 255, 0.03);
+            color: var(--text-main);
+        }
+
+        .playlist-item.active {
+            background: rgba(0, 243, 255, 0.1);
+            border-left: 3px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+        /* Rodapé */
+        .cyber-footer {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 10px;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: var(--neon-green);
+            box-shadow: 0 0 5px var(--neon-green);
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cyber-frame">
+        <div class="player-grid">
+            <!-- Esquerda: Visualizador, Info e Controles -->
+            <div class="left-panel">
+                <div class="visualizer-container">
+                    <canvas id="canvas"></canvas>
+                </div>
+
+                <div class="track-info">
+                    <div class="track-title" id="track-title">NENHUMA FAIXA CARREGADA</div>
+                    <div class="track-artist" id="track-artist">STATUS: AGUARDANDO ENTRADA DE DADOS</div>
+                </div>
+
+                <div class="controls-box">
+                    <div class="progress-container">
+                        <span id="current-time">00:00</span>
+                        <div class="progress-bar" id="progress-bar" onclick="seekTrack(event)">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <span id="duration">00:00</span>
+                    </div>
+
+                    <div class="main-controls">
+                        <button class="c-btn" onclick="prevTrack()">|&lt;&lt;</button>
+                        <button class="c-btn action-btn" id="play-btn" onclick="togglePlay()">[ ▶ ]</button>
+                        <button class="c-btn" onclick="nextTrack()">&gt;&gt;|</button>
+                    </div>
+
+                    <div class="secondary-controls">
+                        <div class="volume-box">
+                            <span>VOL:</span>
+                            <input type="range" min="0" max="1" step="0.01" value="1" id="volume-slider" oninput="changeVolume(this.value)">
+                        </div>
+                        <button class="c-btn" id="loop-btn" onclick="toggleLoop()" style="font-size:10px; padding:6px 10px;">LOOP: OFF</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Direita: Gestão de Músicas (Arquivos / Pastas) -->
+            <div class="right-panel">
+                <div class="source-selectors">
+                    <label class="file-label">
+                        + SELECIONAR FAIXAS
+                        <input type="file" id="file-input" accept="audio/*" multiple style="display: none;" onchange="loadFiles(event)">
+                    </label>
+                    <label class="file-label" style="border-color: var(--neon-cyan); color: var(--neon-cyan);">
+                        + SELECIONAR PASTA
+                        <input type="file" id="folder-input" webkitdirectory directory multiple style="display: none;" onchange="loadFiles(event)">
+                    </label>
+                </div>
+
+                <div class="playlist-container" id="playlist">
+                    <div style="padding: 20px; text-align: center; color: var(--text-dim); font-size: 11px;">
+                        [ ARQUIVOS DE ÁUDIO VAZIOS ]<br>Importe faixas ou uma pasta local para iniciar o buffer.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cyber-footer">
+            <div><span class="status-dot"></span>DECK STATUS: PRONTO</div>
+            <div id="track-counter">FAIXAS: 00</div>
+        </div>
+    </div>
+
+    <!-- Elemento de Áudio Oculto -->
+    <audio id="audio-element"></audio>
+
+    <script>
+        const audioElement = document.getElementById('audio-element');
+        const playBtn = document.getElementById('play-btn');
+        const titleEl = document.getElementById('track-title');
+        const artistEl = document.getElementById('track-artist');
+        const progressFill = document.getElementById('progress-fill');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationEl = document.getElementById('duration');
+        const playlistEl = document.getElementById('playlist');
+        const trackCounterEl = document.getElementById('track-counter');
+        const loopBtn = document.getElementById('loop-btn');
+
+        let playlist = [];
+        let currentIndex = 0;
+        let isLooping = false;
+
+        // Web Audio API para o Visualizador
+        let audioCtx, analyser, sourceNode;
+        let isAudioInit = false;
+
+        function initAudioContext() {
+            if (isAudioInit) return;
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+                analyser = audioCtx.createAnalyser();
+                sourceNode = audioCtx.createMediaElementSource(audioElement);
+                sourceNode.connect(analyser);
+                analyser.connect(audioCtx.destination);
+                analyser.fftSize = 64;
+                isAudioInit = true;
+                initVisualizer();
+            } catch(e) {
+                console.error("Erro ao iniciar Web Audio API", e);
+            }
+        }
+
+        function loadFiles(event) {
+            const files = Array.from(event.target.files).filter(file => file.type.startsWith('audio/'));
+            if (files.length === 0) return;
+
+            files.forEach(file => {
+                playlist.push({
+                    name: file.name.replace(/\.[^/.]+$/, ""),
+                    url: URL.createObjectURL(file)
+                });
+            });
+
+            renderPlaylist();
+            trackCounterEl.innerText = `FAIXAS: ${playlist.length < 10 ? '0' + playlist.length : playlist.length}`;
+
+            if (audioElement.paused && playlist.length === files.length) {
+                selectTrack(0);
+            }
+        }
+
+        function renderPlaylist() {
+            if (playlist.length === 0) return;
+            playlistEl.innerHTML = '';
+            playlist.forEach((track, index) => {
+                const item = document.createElement('div');
+                item.className = `playlist-item ${index === currentIndex ? 'active' : ''}`;
+                item.innerHTML = `<span>${index + 1}. ${track.name}</span>`;
+                item.onclick = () => selectTrack(index);
+                playlistEl.appendChild(item);
+            });
+        }
+
+        function selectTrack(index) {
+            if (playlist.length === 0) return;
+            currentIndex = index;
+            const track = playlist[currentIndex];
+
+            audioElement.src = track.url;
+            titleEl.innerText = track.name.toUpperCase();
+            artistEl.innerText = "FONTE: LOCAL STORAGE // BUFFERED";
+
+            renderPlaylist();
+            playTrack();
+        }
+
+        function togglePlay() {
+            if (playlist.length === 0) return;
+            initAudioContext();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            if (audioElement.paused) {
+                audioElement.play();
+                playBtn.innerText = '[ ❚❚ ]';
+            } else {
+                audioElement.pause();
+                playBtn.innerText = '[ ▶ ]';
+            }
+        }
+
+        function playTrack() {
+            initAudioContext();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            audioElement.play();
+            playBtn.innerText = '[ ❚❚ ]';
+        }
+
+        function nextTrack() {
+            if (playlist.length === 0) return;
+            currentIndex = (currentIndex + 1) % playlist.length;
+            selectTrack(currentIndex);
+        }
+
+        function prevTrack() {
+            if (playlist.length === 0) return;
+            currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+            selectTrack(currentIndex);
+        }
+
+        function toggleLoop() {
+            isLooping = !isLooping;
+            audioElement.loop = isLooping;
+            loopBtn.innerText = `LOOP: ${isLooping ? 'ON' : 'OFF'}`;
+            loopBtn.style.borderColor = isLooping ? 'var(--neon-cyan)' : 'var(--border-color)';
+            loopBtn.style.color = isLooping ? 'var(--neon-cyan)' : 'var(--text-main)';
+        }
+
+        function changeVolume(val) {
+            audioElement.volume = val;
+        }
+
+        function seekTrack(e) {
+            if (!audioElement.duration) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            audioElement.currentTime = pos * audioElement.duration;
+        }
+
+        // Atualização da Barra de Progresso e Fim de Faixa
+        audioElement.ontimeupdate = () => {
+            if (!audioElement.duration) return;
+            const percent = (audioElement.currentTime / audioElement.duration) * 100;
+            progressFill.style.width = percent + '%';
+            
+            currentTimeEl.innerText = formatTime(audioElement.currentTime);
+            durationEl.innerText = formatTime(audioElement.duration);
+        };
+
+        audioElement.onended = () => {
+            if (!isLooping) {
+                nextTrack();
+            }
+        };
+
+        function formatTime(seconds) {
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min < 10 ? '0' + min : min}:${sec < 10 ? '0' + sec : sec}`;
+        }
+
+        // Visualizador Cyberpunk com Canvas
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function initVisualizer() {
+            function resizeCanvas() {
+                canvas.width = canvas.parentElement.offsetWidth;
+                canvas.height = canvas.parentElement.offsetHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function draw() {
+                requestAnimationFrame(draw);
+
+                ctx.fillStyle = '#020308';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                if (!audioElement.paused && analyser) {
+                    analyser.getByteFrequencyData(dataArray);
+
+                    const barWidth = (canvas.width / bufferLength) * 2.5;
+                    let x = 0;
+
+                    for (let i = 0; i < bufferLength; i++) {
+                        const barHeight = (dataArray[i] / 255) * canvas.height;
+
+                        // Estilo Cyberpunk: Barras em Cian / Pink
+                        ctx.fillStyle = i % 2 === 0 ? '#00f3ff' : '#ff0055';
+                        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+
+                        x += barWidth + 1;
+                    }
+                } else {
+                    // Modo Standby - Linha Estática de Energia
+                    ctx.strokeStyle = '#1f223f';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(0, canvas.height / 2);
+                    ctx.lineTo(canvas.width, canvas.height / 2);
+                    ctx.stroke();
+                }
+            }
+            draw();
+        }
+    </script>
+</body>
+</html>

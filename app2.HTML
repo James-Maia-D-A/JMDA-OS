@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Editor Web OS - Salvar</title>
+    <!-- Importando o design do Quill.js -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+    <style>
+        body { background: #1e1e1e; color: #fff; font-family: sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        #editor-container { width: 80%; height: 300px; background: #fff; color: #000; margin-top: 10px; }
+        .toolbar-buttons { margin-top: 15px; display: flex; gap: 10px; }
+        button { padding: 10px 15px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; background: #444; color: white; }
+        button:hover { background: #666; }
+        #btn-pdf { background: #d32f2f; }
+        #btn-html { background: #1976d2; }
+        #btn-txt { background: #388e3c; }
+    </style>
+</head>
+<body>
+    <h2>Editor de Texto (Web OS)</h2>
+    <div id="editor-container"></div>
+
+    <div class="toolbar-buttons">
+        <button id="btn-html" onclick="salvarComo('html')">Salvar como HTML</button>
+        <button id="btn-txt" onclick="salvarComo('txt')">Salvar como TXT</button>
+        <button id="btn-pdf" onclick="salvarComo('pdf')">Salvar como PDF</button>
+    </div>
+
+    <!-- Importando o script do Quill.js -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+    <script>
+        const quill = new Quill('#editor-container', {
+            theme: 'snow'
+        });
+
+        function salvarComo(tipo) {
+            let conteudo = '';
+            let extensao = '';
+            let mimeType = '';
+
+            if (tipo === 'html') {
+                conteudo = quill.root.innerHTML;
+                extensao = 'html';
+                mimeType = 'text/html';
+                baixarArquivo(conteudo, extensao, mimeType);
+            } else if (tipo === 'txt') {
+                conteudo = quill.getText();
+                extensao = 'txt';
+                mimeType = 'text/plain';
+                baixarArquivo(conteudo, extensao, mimeType);
+            } else if (tipo === 'pdf') {
+                window.print();
+            }
+        }
+
+        function baixarArquivo(conteudo, extensao, mimeType) {
+            const blob = new Blob([conteudo], { type: mimeType });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'documento.' + extensao;
+            link.click();
+        }
+    </script>
+</body>
+</html>

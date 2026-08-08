@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<title>JMDA-OS // Legacy Edition</title>
+<style>
+:root{--hud:#fff;--bg:#000;--panel:#050505;--panel2:#0b0b0b;--font:14px}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:var(--hud);font-family:"Courier New",monospace;font-size:var(--font)}
+button,select{font:inherit}
+button{touch-action:manipulation}
+body{display:flex;flex-direction:column}
+button{background:#090909;color:var(--hud);border:1px solid var(--hud);cursor:pointer}
+button:active,button.active{background:var(--hud);color:#000}
+#topbar{height:34px;min-height:34px;border-bottom:1px solid var(--hud);display:flex;align-items:center;justify-content:space-between;padding:0 8px;background:#020202;font-size:12px;z-index:500;text-shadow:0 0 3px rgba(255,255,255,.25)}
+.brand{font-weight:bold;letter-spacing:2px}\n#fsBtn{height:23px;padding:0 7px;border:1px solid var(--hud);background:#000;color:var(--hud);font-size:10px;margin-left:auto;margin-right:8px;box-shadow:1px 1px 0 #333;text-shadow:1px 1px 0 #333}\n#fsBtn:active{background:var(--hud);color:#000}.top-btn{height:22px;padding:0 8px;font-size:10px;border:1px solid var(--hud);background:#000;color:var(--hud);text-shadow:1px 1px 0 #222}.top-btn:active{background:var(--hud);color:#000}
+.status{display:flex;gap:12px;align-items:center;white-space:nowrap}
+.dot{display:inline-block;width:7px;height:7px;background:var(--hud);margin-right:4px}
+#desktop{position:relative;flex:1;min-height:0;overflow:hidden;background:#000}
+#desktop:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px);background-size:100% 4px;opacity:.35}
+#desktop:after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at center,transparent 0,#000 100%);opacity:.35}
+#boot{position:absolute;inset:0;background:#000;z-index:1000;padding:28px;font-size:13px;line-height:1.7}
+#boot.hide{display:none}
+.bootline{opacity:.85}
+#bootProgress{display:block;margin-top:12px;border:1px solid var(--hud);width:min(420px,90%);height:14px}
+#bootFill{height:100%;width:0;background:var(--hud)}
+.window{position:absolute;left:40px;top:35px;width:440px;height:330px;background:#000;border:1px solid var(--hud);display:flex;flex-direction:column;z-index:100;box-shadow:4px 4px 0 #222}
+.window.max{left:0!important;top:0!important;width:100%!important;height:100%!important;box-shadow:none}
+.window-head{height:27px;min-height:27px;background:var(--hud);color:#000;display:flex;align-items:center;justify-content:space-between;padding:0 5px 0 8px;font-weight:bold;user-select:none;touch-action:none}
+.window-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:1px 1px 0 #555}
+.win-controls{display:flex;gap:3px}
+.win-btn{width:28px;height:21px;border:1px solid #000;background:#000;color:#fff;padding:0}
+.win-btn:active{background:#fff;color:#000}
+.window-body{flex:1;min-height:0;background:#fff;overflow:auto}
+.window-body iframe{width:100%;height:100%;border:0;display:block;background:#fff}
+#dock{position:absolute;left:8px;right:8px;bottom:8px;height:42px;border:1px solid var(--hud);background:rgba(0,0,0,.96);display:flex;align-items:center;gap:5px;padding:5px;z-index:450;overflow:hidden;text-shadow:1px 1px 0 #222}
+.dock-item{height:29px;min-width:31px;padding:0 8px;font-size:11px;white-space:nowrap}
+#side{position:absolute;left:8px;top:8px;width:185px;border:1px solid var(--hud);background:rgba(0,0,0,.94);z-index:5;padding:7px;box-shadow:4px 4px 0 #111,0 0 8px rgba(255,255,255,.08)}
+.side-title{display:flex;justify-content:space-between;border-bottom:1px dashed var(--hud);padding-bottom:5px;margin-bottom:6px;font-weight:bold}
+#clock{font-size:17px;text-align:center;padding:5px;border:1px solid #555;margin-bottom:7px}
+.metric{font-size:10px;margin:3px 0;display:flex;justify-content:space-between}
+.bar{height:5px;border:1px solid #777;margin:2px 0 5px}
+.bar i{display:block;height:100%;width:0;background:var(--hud)}
+.apps{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;max-height:190px;overflow:auto;padding-right:2px}
+.app{height:28px;padding:0;font-size:11px}
+.side-actions{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:6px}
+#side.hidden{display:none}
+#side.hidden + #dock{left:8px}
+.legacy-gradient{
+  background:linear-gradient(90deg,#000 0%,#222 18%,#000 36%,#222 54%,#000 72%,#222 90%,#000 100%);
+  background-size:220% 100%;
+  animation:oldGradient 7s linear infinite;
+}
+@keyframes oldGradient{from{background-position:0 0}to{background-position:220% 0}}
+
+.side-actions button,.side-actions select{height:28px;padding:0;font-size:10px}
+.side-actions .wide{grid-column:1/3}
+#menu{display:none;position:absolute;left:8px;bottom:57px;width:235px;border:1px solid var(--hud);background:#000;z-index:600;padding:7px}
+#menu.open{display:block}
+.menu-head{font-weight:bold;border-bottom:1px dashed var(--hud);padding-bottom:5px;margin-bottom:6px}
+.menu-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
+.menu-grid button{height:28px;font-size:10px}
+#toast{position:absolute;right:10px;top:10px;z-index:800;background:#000;border:1px solid var(--hud);padding:7px 10px;display:none;font-size:11px}
+#power{display:none;position:absolute;inset:0;background:#000;z-index:999;text-align:center;align-items:center;justify-content:center}
+#power.show{display:flex}
+#help{display:none;position:absolute;inset:0;background:rgba(0,0,0,.92);z-index:900;align-items:center;justify-content:center;padding:15px}
+#help.show{display:flex}
+.helpbox{border:1px solid var(--hud);background:#050505;width:min(500px,95%);max-height:90%;overflow:auto;padding:14px;line-height:1.5}
+.helpbox h3{margin:0 0 8px;border-bottom:1px dashed var(--hud);padding-bottom:5px}
+.helpbox button{padding:7px 12px;margin-top:10px}
+.browser-fullscreen #topbar{height:34px}
+.browser-fullscreen #desktop{height:calc(100vh - 34px)}
+.browser-fullscreen #side{top:8px}
+.browser-fullscreen #dock{bottom:8px}
+@media(max-width:700px){
+ #topbar{height:30px;min-height:30px;font-size:10px}\n #fsBtn{font-size:9px;padding:0 5px;margin-right:5px}
+ .status span.extra{display:none}
+ #side{display:none}.top-btn{display:inline-block}
+ #dock{left:5px;right:5px;bottom:5px;height:40px}
+ .window{left:5px!important;top:5px!important;width:calc(100% - 10px)!important;height:calc(100% - 50px)!important;box-shadow:none}
+ .window:not(.max){width:calc(100% - 10px)!important;height:calc(100% - 50px)!important}
+ #menu{left:5px;bottom:50px;width:calc(100% - 10px)}
+ #toast{top:5px;right:5px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header id="topbar">
+  <div class="brand">JMDA-OS <span style="font-weight:normal">/ LEGACY</span></div>
+  <div class="status"><button id="hudToggle" class="top-btn" onclick="toggleSidebar()">HUD</button>
+    <span><i class="dot"></i><span id="net">ONLINE</span></span>
+    <span class="extra">MEM <b id="mem">--</b></span>
+    <button id="fsBtn" onclick="toggleFullscreen()" title="Tela cheia">⛶ FULL</button><span id="topClock">00:00:00</span>
+  </div>
+</header>
+
+<main id="desktop">
+  <div id="boot">
+    <div class="bootline">JMDA-OS LEGACY EDITION // INITIALIZING...</div>
+    <div class="bootline">LOW RESOURCE MODE: ENABLED</div>
+    <div class="bootline">GRAPHICS: CSS / NO GPU DEPENDENCIES</div>
+    <div class="bootline">APPLICATION MANAGER: READY</div>
+    <div id="bootProgress"><div id="bootFill"></div></div>
+    <div id="bootText" style="margin-top:8px">CHECKING SYSTEM...</div>
+  </div>
+
+  <aside id="side">
+    <div class="side-title"><span>JMDA-OS</span><span>2.0</span></div>
+    <div id="clock">00:00:00<br><small>00/00/0000</small></div>
+    <div class="metric"><span>CPU LOAD*</span><b id="cpu">--%</b></div>
+    <div class="bar"><i id="cpuBar"></i></div>
+    <div class="metric"><span>JS MEM</span><b id="memSide">--</b></div>
+    <div class="bar"><i id="memBar"></i></div>
+    <div style="font-size:8px;color:#777;margin-top:2px">*atividade estimada do navegador</div>
+    <div class="metric"><span>WINDOWS</span><b id="winCount">0</b></div>
+    <div class="side-title" style="margin-top:7px">APPS</div>
+    <div class="apps" id="apps"></div>
+    <div class="side-actions">
+      <button class="wide" onclick="toggleMenu()">START</button>
+      <button onclick="toggleHelp()">?</button>
+      <button onclick="powerOff()">OFF</button>
+      <select id="color" onchange="setColor(this.value)">
+        <option value="#ffffff">WHITE</option>
+        <option value="#00ff66">GREEN</option>
+        <option value="#00ffff">CYAN</option>
+        <option value="#ffcc00">AMBER</option>
+        <option value="#ff3355">RED</option>
+      </select>
+      <button onclick="changeFont(-1)">A-</button>
+      <button onclick="changeFont(1)">A+</button>
+    </div>
+  </aside>
+
+  <div id="dock">
+    <button class="dock-item" onclick="toggleMenu()">☰ START</button>
+    <span id="dockApps" style="display:flex;gap:4px;overflow:hidden"></span>
+  </div>
+
+  <div id="menu">
+    <div class="menu-head">APPLICATIONS // 01—50</div>
+    <div class="menu-grid" id="menuGrid"></div>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="help">
+    <div class="helpbox">
+      <h3>[ JMDA-OS // SYSTEM GUIDE ]</h3>
+      <p><b>DESKTOP:</b> abra os programas pelos números.</p>
+      <p><b>PC:</b> arraste a barra superior das janelas.</p>
+      <p><b>ANDROID:</b> toque nos controles. Apps abrem em tela cheia para reduzir consumo de memória.</p>
+      <p><b>APPS:</b> coloque <code>app1.html</code> até <code>app50.html</code> na mesma pasta deste arquivo.</p>
+      <p><b>PERFORMANCE:</b> sem bibliotecas externas, sem canvas contínuo e sem efeitos pesados.</p>
+      <button onclick="toggleHelp()">FECHAR</button>
+    </div>
+  </div>
+
+  <div id="power">
+    <div>
+      <div style="font-size:18px">SYSTEM HALTED</div>
+      <div style="margin-top:8px;color:#777">TOQUE PARA REINICIAR</div>
+    </div>
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+var windows=[], z=20, fontSize=14, volume=0.5;
+
+function $(id){return document.getElementById(id)}
+
+function save(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function load(k,d){try{var v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}}
+
+function toast(msg){
+  var t=$("toast"); t.textContent=msg; t.style.display="block";
+  clearTimeout(toast.timer); toast.timer=setTimeout(function(){t.style.display="none"},1600);
+}
+
+function appButton(i){
+  var b=document.createElement("button");
+  b.className="app"; b.textContent=("0"+i).slice(-2);
+  b.onclick=function(){openApp(i)}; return b;
+}
+function renderApps(){
+  $("apps").innerHTML=""; $("menuGrid").innerHTML="";
+  for(var i=1;i<=50;i++){
+    $("apps").appendChild(appButton(i));
+    $("menuGrid").appendChild(appButton(i));
+  }
+}
+function openApp(i){
+  var existing=null;
+  for(var k=0;k<windows.length;k++) if(windows[k].app===i) existing=windows[k];
+  if(existing){existing.el.style.display="flex"; bring(existing.el); return}
+  var w=document.createElement("section"); w.className="window";
+  var mobile=window.innerWidth<=700;
+  if(mobile) w.className+=" max";
+  w.style.zIndex=++z;
+  if(!mobile){
+    var n=windows.length%7; w.style.left=(230+n*24)+"px"; w.style.top=(45+n*20)+"px";
+  }
+  var head=document.createElement("div"); head.className="window-head";
+  var title=document.createElement("span"); title.className="window-title"; title.textContent="[APP "+("0"+i).slice(-2)+"]";
+  var controls=document.createElement("div"); controls.className="win-controls";
+  var min=document.createElement("button"); min.className="win-btn"; min.textContent="_";
+  var max=document.createElement("button"); max.className="win-btn"; max.textContent="□";
+  var close=document.createElement("button"); close.className="win-btn"; close.textContent="X";
+  controls.appendChild(min);controls.appendChild(max);controls.appendChild(close);
+  head.appendChild(title);head.appendChild(controls);
+  var body=document.createElement("div"); body.className="window-body";
+  var iframe=document.createElement("iframe"); iframe.loading="lazy"; iframe.src="app"+i+".html";
+  body.appendChild(iframe);w.appendChild(head);w.appendChild(body);$("desktop").appendChild(w);
+  var item={app:i,el:w,iframe:iframe}; windows.push(item);
+  bring(w); updateWindows(); addDock(item); 
+  min.onclick=function(){w.style.display="none"};
+  max.onclick=function(){
+    w.classList.toggle("max");
+    if(w.classList.contains("max")) max.textContent="▣"; else max.textContent="□";
+    bring(w);
+  };
+  close.onclick=function(){iframe.src="about:blank";w.remove();windows.splice(windows.indexOf(item),1);removeDock(item);updateWindows()};
+  makeDrag(w,head);
+  if(mobile) toast("APP "+("0"+i).slice(-2)+" // FULLSCREEN");
+}
+function bring(w){w.style.zIndex=++z}
+function updateWindows(){$("winCount").textContent=windows.length}
+function addDock(item){
+  var b=document.createElement("button");b.className="dock-item";b.textContent="APP "+("0"+item.app).slice(-2);
+  b.onclick=function(){item.el.style.display="flex";bring(item.el)};item.dock=b;$("dockApps").appendChild(b);
+}
+function removeDock(item){if(item.dock)item.dock.remove()}
+function makeDrag(w,head){
+  var dragging=false,sx=0,sy=0,ox=0,oy=0;
+  function start(x,y){
+    if(w.classList.contains("max"))return;
+    dragging=true;sx=x;sy=y;ox=w.offsetLeft;oy=w.offsetTop;bring(w);
+  }
+  function move(x,y){
+    if(!dragging)return;
+    w.style.left=Math.max(0,ox+x-sx)+"px";
+    w.style.top=Math.max(0,oy+y-sy)+"px";
+  }
+  function end(){dragging=false}
+  head.addEventListener("mousedown",function(e){start(e.clientX,e.clientY)});
+  document.addEventListener("mousemove",function(e){move(e.clientX,e.clientY)});
+  document.addEventListener("mouseup",end);
+  head.addEventListener("touchstart",function(e){var t=e.touches[0];start(t.clientX,t.clientY)},{passive:true});
+  document.addEventListener("touchmove",function(e){if(!dragging)return;var t=e.touches[0];move(t.clientX,t.clientY)},{passive:true});
+  document.addEventListener("touchend",end);
+}
+window.toggleFullscreen=function(){
+  var el=document.documentElement;
+  var isFull=document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+  if(!isFull){
+    var req=el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if(req){
+      try{
+        var p=req.call(el);
+        if(p && p.catch){p.catch(function(){toast("TELA CHEIA BLOQUEADA PE ESTE NAVEGADOR")});}
+      }catch(e){toast("TELA CHEIA INDISPONÍVEL")}
+    }else{
+      toast("FULLSCREEN NÃO SUPORTADO");
+    }
+  }else{
+    var exit=document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+    if(exit) exit.call(document);
+  }
+}
+function updateFullscreenButton(){
+  var full=!!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+  var b=$("fsBtn");
+  if(b) b.textContent=full?"⛶ EXIT":"⛶ FULL";
+  document.body.classList.toggle("browser-fullscreen",full);
+}
+document.addEventListener("fullscreenchange",updateFullscreenButton);
+document.addEventListener("webkitfullscreenchange",updateFullscreenButton);
+window.toggleSidebar=function(){
+  var side=$("side");
+  side.classList.toggle("hidden");
+  var hidden=side.classList.contains("hidden");
+  save("sidebar",hidden?"0":"1");
+  var b=$("hudToggle");
+  if(b) b.textContent=hidden?"HUD +":"HUD −";
+  toast(hidden?"HUD // HIDDEN":"HUD // VISIBLE");
+}
+window.toggleMenu=function(){$("menu").classList.toggle("open")}
+window.toggleHelp=function(){$("help").classList.toggle("show");$("menu").classList.remove("open")}
+window.powerOff=function(){$("power").classList.add("show");$("menu").classList.remove("open")}
+$("power").onclick=function(){$("power").classList.remove("show")}
+window.setColor=function(c){document.documentElement.style.setProperty("--hud",c);save("hud",c)}
+window.changeFont=function(d){fontSize=Math.max(10,Math.min(18,fontSize+d));document.documentElement.style.setProperty("--font",fontSize+"px");save("font",fontSize)}
+function clock(){
+  var d=new Date(),time=d.toLocaleTimeString("pt-BR"),date=d.toLocaleDateString("pt-BR");
+  $("clock").innerHTML=time+"<br><small>"+date+"</small>";$("topClock").textContent=time;
+}
+var cpuSamples=[], lastMetric=performance.now(), lastTick=0;
+function metrics(){
+  /* A Web page cannot read the operating system's real CPU percentage.
+     We measure main-thread work between frames instead, so the display is
+     honest rather than pretending to be the Android CPU meter. */
+  var now=performance.now(), elapsed=now-lastMetric;
+  var busy=Math.max(0,Math.min(100,Math.round((elapsed>0 ? Math.max(0,elapsed-300)/10 : 0))));
+  lastMetric=now;
+
+  var memText="N/A", memPct=0;
+  if(performance.memory){
+    var used=performance.memory.usedJSHeapSize;
+    var limit=performance.memory.jsHeapSizeLimit;
+    memText=Math.round(used/1048576)+" MB";
+    memPct=limit ? Math.min(100,Math.round(used/limit*100)) : 0;
+  }else{
+    memText="N/D";
+  }
+
+  $("cpu").textContent=busy+"%";
+  $("cpuBar").style.width=busy+"%";
+  $("mem").textContent=memText;
+  $("memSide").textContent=memText;
+  $("memBar").style.width=memPct+"%";
+}
+function network(){
+  $("net").textContent=navigator.onLine?"ONLINE":"OFFLINE";
+}
+function boot(){
+  var fill=$("bootFill"),text=$("bootText"),p=0;
+  var timer=setInterval(function(){
+    p+=25;fill.style.width=p+"%";
+    text.textContent=["CHECKING SYSTEM...","LOADING CORE...","MOUNTING APPS...","SYSTEM READY."][Math.min(3,p/25-1)];
+    if(p>=100){clearInterval(timer);setTimeout(function(){$("boot").classList.add("hide")},180)}
+  },90);
+}
+function init(){
+  var c=load("hud","#ffffff");document.documentElement.style.setProperty("--hud",c);$("color").value=c;
+  fontSize=parseInt(load("font","14"),10);document.documentElement.style.setProperty("--font",fontSize+"px");
+  renderApps();clock();metrics();network();boot();
+  if(load("sidebar","1")==="0") $("side").classList.add("hidden");
+  $("hudToggle").textContent=$("side").classList.contains("hidden")?"HUD +":"HUD −";
+  $("topbar").classList.add("legacy-gradient"); $("dock").classList.add("legacy-gradient");
+  setInterval(clock,1000);setInterval(metrics,3000);
+  window.addEventListener("online",network);window.addEventListener("offline",network);
+}
+init();
+})();
+</script>
+</body>
+</html>

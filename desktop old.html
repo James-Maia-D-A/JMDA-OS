@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JMDA-OS - Desktop</title>
+    <style>
+        :root {
+            --hud-color: #ffffff; /* Padrão alterado para Branco */
+            --font-size-base: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000000; /* Fundo preto absoluto obrigatório */
+            color: var(--hud-color);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: var(--font-size-base);
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: row;
+        }
+
+        /* --- BARRA LATERAL ESQUERDA (HUD / CONTROLES) --- */
+        .sidebar {
+            width: 280px;
+            min-width: 280px;
+            background-color: #050505;
+            border-right: 2px solid var(--hud-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 12px;
+            box-sizing: border-box;
+            z-index: 100;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--hud-color);
+        }
+
+        .sidebar-section {
+            border-bottom: 1px dashed var(--hud-color);
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .hud-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Relógio */
+        #clock {
+            font-size: 1rem;
+            font-weight: bold;
+            text-align: center;
+            background: #111;
+            padding: 4px;
+            border: 1px solid var(--hud-color);
+        }
+
+        /* Grade de Apps Numerados (1 ao 50) com Rolagem Independente */
+        .app-grid-container {
+            max-height: 130px;
+            overflow-y: auto;
+            padding-right: 3px;
+        }
+
+        .app-grid-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .app-grid-container::-webkit-scrollbar-thumb {
+            background: var(--hud-color);
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+        }
+
+        .app-item {
+            background: #111;
+            color: var(--hud-color);
+            border: 1px solid var(--hud-color);
+            padding: 5px 0;
+            text-align: center;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.75rem;
+            transition: 0.2s;
+            touch-action: manipulation;
+        }
+
+        .app-item:hover, .app-item:active {
+            background: var(--hud-color);
+            color: #000;
+        }
+
+        /* Botões de Controle */
+        .control-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+        }
+
+        .hud-btn {
+            background: #111;
+            color: var(--hud-color);
+            border: 1px solid var(--hud-color);
+            padding: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            touch-action: manipulation;
+        }
+
+        .hud-btn:hover, .hud-btn:active {
+            background: var(--hud-color);
+            color: #000;
+        }
+
+        .full-btn {
+            grid-column: span 2;
+        }
+
+        select.hud-btn {
+            width: 100%;
+            appearance: none;
+            -webkit-appearance: none;
+            text-align: center;
+        }
+
+        /* --- ÁREA DE TRABALHO (DESKTOP) --- */
+        .desktop-area {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(circle, #0a0a0a 0%, #000000 90%);
+            overflow: hidden;
+            height: 100%;
+        }
+
+        /* --- GERENCIADOR DE JANELAS --- */
+        .window {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            width: 420px;
+            height: 320px;
+            max-width: calc(100% - 20px);
+            max-height: calc(100% - 20px);
+            background: #000;
+            border: 2px solid var(--hud-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
+            z-index: 10;
+            transition: none;
+        }
+
+        .window.maximized {
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            border: none;
+        }
+
+        .window.minimized {
+            display: none !important;
+        }
+
+        .window-header {
+            background: var(--hud-color);
+            color: #000;
+            padding: 4px 8px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .window-btn {
+            background: #000;
+            color: var(--hud-color);
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 2px 6px;
+            font-size: 0.8rem;
+        }
+
+        .window-btn:hover {
+            background: #222;
+        }
+
+        .window-body-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background: #fff;
+        }
+
+        .window-body-container::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .window-body-container::-webkit-scrollbar-thumb {
+            background: var(--hud-color);
+        }
+
+        .window-body {
+            border: none;
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #fff;
+        }
+
+        /* Modal de Ajuda / Instruções */
+        #helpModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .modal-content {
+            background: #050505;
+            border: 2px solid var(--hud-color);
+            padding: 15px;
+            width: 450px;
+            max-width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+
+        .modal-header {
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            border-bottom: 1px dashed var(--hud-color);
+            padding-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Tela de Sistema Desligado */
+        #power-off-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background: #000;
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            color: #444;
+            font-size: 1.2rem;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* --- RESPONSIVIDADE MOBILE / TELAS PEQUENAS --- */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column-reverse;
+            }
+
+            .sidebar {
+                width: 100%;
+                min-width: 100%;
+                height: auto;
+                max-height: 38vh;
+                border-right: none;
+                border-top: 2px solid var(--hud-color);
+                padding: 8px;
+            }
+
+            .desktop-area {
+                height: 62vh;
+                flex: none;
+            }
+
+            .app-grid-container {
+                max-height: 85px;
+            }
+
+            .window {
+                top: 10px !important;
+                left: 10px !important;
+                width: calc(100% - 20px) !important;
+                height: calc(100% - 20px) !important;
+                max-width: none !important;
+                max-height: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA LATERAL ESQUERDA -->
+    <div class="sidebar">
+        <div>
+            <div class="sidebar-section">
+                <div class="hud-title"><span>JMDA-OS</span><span>v1.0</span></div>
+                <div id="clock">00:00:00</div>
+                <button class="hud-btn full-btn" style="margin-top: 6px;" onclick="toggleFullScreen()">Tela Cheia</button>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="hud-title">
+                    <span>Apps (1-50)</span>
+                    <button class="hud-btn" style="padding: 2px 5px; font-size: 0.7rem;" onclick="toggleHelp(true)">?</button>
+                </div>
+                <div class="app-grid-container">
+                    <div class="app-grid" id="appGrid">
+                        <!-- Injetado via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="hud-title">Configurações</div>
+                <div style="margin-bottom: 3px;">Cor HUD:</div>
+                <select id="colorPicker" class="hud-btn full-btn" onchange="changeColor(this.value)">
+                    <option value="#ffffff">Branco Puro</option>
+                    <option value="#00ff66">Verde Terminal</option>
+                    <option value="#00ffff">Ciano Cyber</option>
+                    <option value="#ff0055">Vermelho Carmesim</option>
+                    <option value="#ffcc00">Amarelo Âmbar</option>
+                </select>
+                <div style="margin: 4px 0 3px 0;">Fonte:</div>
+                <div class="control-grid">
+                    <button class="hud-btn" onclick="changeFontSize(-1)">A -</button>
+                    <button class="hud-btn" onclick="changeFontSize(1)">A +</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="hud-title">Sistema</div>
+            <div class="control-grid">
+                <button class="hud-btn" onclick="adjustVolume('up')">Vol +</button>
+                <button class="hud-btn" onclick="adjustVolume('down')">Vol -</button>
+                <button class="hud-btn full-btn" onclick="adjustVolume('mute')">Mutar Áudio</button>
+                <button class="hud-btn" onclick="restartSystem()">Reiniciar</button>
+                <button class="hud-btn" onclick="powerOff()">Desligar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ÁREA DE TRABALHO -->
+    <div class="desktop-area" id="desktopArea">
+        <!-- Janelas abrem aqui -->
+    </div>
+
+    <!-- MODAL DE AJUDA / ADICIONAR PROGRAMAS -->
+    <div id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>[GUIA] Adicionar Programas</span>
+                <button class="window-btn" onclick="toggleHelp(false)">X</button>
+            </div>
+            <p style="line-height: 1.4; font-size: 0.85rem;">
+                Para adicionar ou substituir os programas do <b>JMDA-OS</b>:
+            </p>
+            <ol style="padding-left: 15px; font-size: 0.8rem; line-height: 1.4;">
+                <li>Crie o arquivo HTML do seu programa.</li>
+                <li>Salve o arquivo na <b>pasta raiz</b> do projeto.</li>
+                <li>Renomeie o arquivo para <b>appX.html</b> (substituindo o <b>X</b> pelo número correspondente do botão na grade, de 1 a 50).</li>
+            </ol>
+            <button class="hud-btn full-btn" style="margin-top: 10px;" onclick="toggleHelp(false)">Entendido</button>
+        </div>
+    </div>
+
+    <!-- TELA DE DESLIGAMENTO -->
+    <div id="power-off-screen">SISTEMA DESLIGADO. TOQUE PARA REINICIAR.</div>
+
+    <script>
+        let currentVolume = 0.5;
+        let isMuted = false;
+
+        window.onload = function() {
+            loadSettings();
+            renderAppGrid();
+            startClock();
+            playRoboticBootSound();
+        };
+
+        function requestFullScreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(() => {});
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                requestFullScreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        function playRoboticBootSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.5);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 1.2);
+
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 1.2);
+            } catch(e) {
+                console.log("Áudio aguardando interação.");
+            }
+        }
+
+        function startClock() {
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('clock').innerText = now.toLocaleTimeString() + "\n" + now.toLocaleDateString();
+            }, 1000);
+        }
+
+        function renderAppGrid() {
+            const gridContainer = document.getElementById('appGrid');
+            gridContainer.innerHTML = "";
+            
+            for (let i = 1; i <= 50; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'app-item';
+                btn.innerText = i;
+                const appPath = `app${i}.html`;
+                btn.onclick = () => openAppWindow(`App ${i}`, appPath);
+                gridContainer.appendChild(btn);
+            }
+        }
+
+        function openAppWindow(appName, appPath) {
+            const desktop = document.getElementById('desktopArea');
+            
+            const win = document.createElement('div');
+            win.className = 'window';
+            
+            // Em telas menores, já abre maximizado ou ajustado para caber perfeitamente
+            if (window.innerWidth <= 768) {
+                win.classList.add('maximized');
+            } else {
+                const offset = (document.querySelectorAll('.window').length * 20) % 150;
+                win.style.top = (30 + offset) + 'px';
+                win.style.left = (30 + offset) + 'px';
+            }
+
+            win.innerHTML = `
+                <div class="window-header" onmousedown="bringToFront(this.parentElement)" ontouchstart="bringToFront(this.parentElement)">
+                    <span>[APP] ${appName}</span>
+                    <div class="window-controls">
+                        <button class="window-btn" onclick="toggleMinimize(this)" title="Minimizar">_</button>
+                        <button class="window-btn" onclick="toggleMaximize(this)" title="Maximizar">🗖</button>
+                        <button class="window-btn" onclick="this.closest('.window').remove()" title="Fechar">X</button>
+                    </div>
+                </div>
+                <div class="window-body-container">
+                    <iframe class="window-body" src="${appPath}" onerror="this.src='erro.html'"></iframe>
+                </div>
+            `;
+
+            makeDraggable(win);
+            desktop.appendChild(win);
+            bringToFront(win);
+        }
+
+        function toggleMinimize(btn) {
+            const win = btn.closest('.window');
+            win.classList.toggle('minimized');
+        }
+
+        function toggleMaximize(btn) {
+            const win = btn.closest('.window');
+            win.classList.toggle('maximized');
+            if(win.classList.contains('maximized')) {
+                win.dataset.prevTop = win.style.top;
+                win.dataset.prevLeft = win.style.left;
+                win.dataset.prevWidth = win.style.width;
+                win.dataset.prevHeight = win.style.height;
+                btn.innerText = "🗗";
+            } else {
+                win.style.top = win.dataset.prevTop || '40px';
+                win.style.left = win.dataset.prevLeft || '40px';
+                win.style.width = win.dataset.prevWidth || '420px';
+                win.style.height = win.dataset.prevHeight || '320px';
+                btn.innerText = "🗖";
+            }
+            bringToFront(win);
+        }
+
+        function bringToFront(winElement) {
+            document.querySelectorAll('.window').forEach(w => w.style.zIndex = '10');
+            winElement.style.zIndex = '100';
+        }
+
+        function makeDraggable(elmnt) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            const header = elmnt.querySelector('.window-header');
+            
+            header.onmousedown = dragMouseDown;
+            header.onttouchstart = dragTouchStart;
+
+            function dragMouseDown(e) {
+                if(elmnt.classList.contains('maximized')) return;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+                bringToFront(elmnt);
+            }
+
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                
+                let newTop = elmnt.offsetTop - pos2;
+                let newLeft = elmnt.offsetLeft - pos1;
+                
+                elmnt.style.top = newTop + "px";
+                elmnt.style.left = newLeft + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+
+            function dragTouchStart(e) {
+                if(elmnt.classList.contains('maximized')) return;
+                const touch = e.touches[0];
+                pos3 = touch.clientX;
+                pos4 = touch.clientY;
+                document.ontouchend = closeTouchDrag;
+                document.ontouchmove = elementTouchDrag;
+                bringToFront(elmnt);
+            }
+
+            function elementTouchDrag(e) {
+                const touch = e.touches[0];
+                pos1 = pos3 - touch.clientX;
+                pos2 = pos4 - touch.clientY;
+                pos3 = touch.clientX;
+                pos4 = touch.clientY;
+
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+            }
+
+            function closeTouchDrag() {
+                document.ontouchend = null;
+                document.ontouchmove = null;
+            }
+        }
+
+        function toggleHelp(show) {
+            document.getElementById('helpModal').style.display = show ? 'flex' : 'none';
+        }
+
+        function adjustVolume(action) {
+            if(action === 'up') currentVolume = Math.min(1, currentVolume + 0.1);
+            if(action === 'down') currentVolume = Math.max(0, currentVolume - 0.1);
+            if(action === 'mute') isMuted = !isMuted;
+            alert(`Volume: ${isMuted ? 'MUTADO' : Math.round(currentVolume * 100) + '%'}`);
+        }
+
+        function restartSystem() {
+            window.location.reload();
+        }
+
+        function powerOff() {
+            document.getElementById('power-off-screen').style.display = 'flex';
+        }
+
+        document.getElementById('power-off-screen').onclick = function() {
+            document.getElementById('power-off-screen').style.display = 'none';
+        };
+
+        function changeColor(color) {
+            document.documentElement.style.setProperty('--hud-color', color);
+            localStorage.setItem('hud_color', color);
+        }
+
+        let currentFontSize = 14;
+        function changeFontSize(direction) {
+            currentFontSize += direction;
+            if(currentFontSize < 10) currentFontSize = 10;
+            if(currentFontSize > 18) currentFontSize = 18;
+            document.documentElement.style.setProperty('--font-size-base', currentFontSize + 'px');
+            localStorage.setItem('hud_fontsize', currentFontSize);
+        }
+
+        function loadSettings() {
+            const savedColor = localStorage.getItem('hud_color');
+            if(savedColor) {
+                document.documentElement.style.setProperty('--hud-color', savedColor);
+                document.getElementById('colorPicker').value = savedColor;
+            }
+            const savedSize = localStorage.getItem('hud_fontsize');
+            if(savedSize) {
+                currentFontSize = parseInt(savedSize);
+                document.documentElement.style.setProperty('--font-size-base', currentFontSize + 'px');
+            }
+        }
+    </script>
+</body>
+</html>

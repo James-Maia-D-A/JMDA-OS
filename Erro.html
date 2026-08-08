@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JMDA OS - Erro de Sistema</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #000000; /* Fundo preto absoluto */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: #ffffff;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .error-code {
+            font-size: 4rem;
+            color: #ff3333; /* Vermelho erro estilo terminal */
+            margin-bottom: 10px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+
+        .error-title {
+            font-size: 1.4rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            color: #ffcccc;
+        }
+
+        .error-message {
+            font-size: 1rem;
+            color: #888888;
+            max-width: 400px;
+            line-height: 1.5;
+            margin-bottom: 40px;
+        }
+
+        /* Botão de retorno estilo retro */
+        .btn-back {
+            background-color: transparent;
+            color: #0f0;
+            border: 2px solid #0f0;
+            padding: 10px 25px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            background-color: #0f0;
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="error-code">404</div>
+    <div class="error-title">Erro Crítico: Página Não Encontrada</div>
+    <div class="error-message">
+        O sistema não conseguiu localizar o arquivo de destino solicitado (o módulo pode estar ausente ou ainda não foi construído).
+    </div>
+
+    <!-- Botão para voltar ao boot ou início -->
+    <a href="index.html" class="btn-back">&lt; Reiniciar Sistema&gt;</a>
+
+</body>
+</html>
