@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Estoque - HUD Minimalista</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #000;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .titulo {
+            font-size: 2.5em;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #000 0%, #333 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitulo {
+            font-size: 0.9em;
+            color: #666;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Linha decorativa */
+        .linha-decorativa {
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #000, transparent);
+            margin: 20px auto 30px;
+        }
+
+        /* Seção de entrada */
+        .secao-entrada {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+            backdrop-filter: blur(10px);
+        }
+
+        .forma-grupo {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #000;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        input {
+            padding: 12px 16px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+            color: #000;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+            background: #fff;
+        }
+
+        input::placeholder {
+            color: #999;
+        }
+
+        button.adicionar {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #000 0%, #333 100%);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button.adicionar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        button.adicionar:active {
+            transform: translateY(0);
+        }
+
+        /* Seção de lista */
+        .secao-lista {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+            backdrop-filter: blur(10px);
+        }
+
+        .titulo-lista {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .lista-produtos {
+            list-style: none;
+        }
+
+        .item-produto {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-left-width: 4px;
+        }
+
+        .item-produto:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .info-produto {
+            flex: 1;
+        }
+
+        .nome-produto {
+            font-weight: 600;
+            font-size: 1.05em;
+            margin-bottom: 5px;
+        }
+
+        .data-produto {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        /* Cores por status */
+        .status-ok {
+            border-left-color: #2563eb;
+            background: rgba(37, 99, 235, 0.08);
+        }
+
+        .status-ok .nome-produto {
+            color: #1e40af;
+        }
+
+        .status-proximo {
+            border-left-color: #16a34a;
+            background: rgba(22, 163, 74, 0.08);
+        }
+
+        .status-proximo .nome-produto {
+            color: #15803d;
+        }
+
+        .status-hoje {
+            border-left-color: #ea580c;
+            background: rgba(234, 88, 12, 0.12);
+        }
+
+        .status-hoje .nome-produto {
+            color: #c2410c;
+            font-weight: 700;
+        }
+
+        .status-vencido {
+            border-left-color: #dc2626;
+            background: rgba(220, 38, 38, 0.12);
+        }
+
+        .status-vencido .nome-produto {
+            color: #b91c1c;
+            font-weight: 700;
+        }
+
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75em;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-top: 6px;
+            width: fit-content;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-ok {
+            background: rgba(37, 99, 235, 0.2);
+            color: #1e40af;
+        }
+
+        .badge-proximo {
+            background: rgba(22, 163, 74, 0.2);
+            color: #15803d;
+        }
+
+        .badge-hoje {
+            background: rgba(234, 88, 12, 0.2);
+            color: #c2410c;
+        }
+
+        .badge-vencido {
+            background: rgba(220, 38, 38, 0.2);
+            color: #b91c1c;
+        }
+
+        .btn-remover {
+            padding: 8px 14px;
+            background: rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            color: #666;
+            font-weight: 600;
+            margin-left: 15px;
+        }
+
+        .btn-remover:hover {
+            background: rgba(220, 38, 38, 0.15);
+            color: #b91c1c;
+            border-color: rgba(220, 38, 38, 0.3);
+        }
+
+        /* Mensagem vazia */
+        .mensagem-vazia {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 1em;
+            letter-spacing: 0.5px;
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .forma-grupo {
+                grid-template-columns: 1fr;
+            }
+
+            .titulo {
+                font-size: 1.8em;
+            }
+
+            .item-produto {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .btn-remover {
+                margin-left: 0;
+                margin-top: 12px;
+                width: 100%;
+            }
+        }
+
+        /* Animação de entrada */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .item-produto {
+            animation: slideIn 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="titulo">PAINEL DE ESTOQUE</div>
+            <div class="subtitulo">Controle de Validade em Tempo Real</div>
+            <div class="linha-decorativa"></div>
+        </header>
+
+        <div class="secao-entrada">
+            <form id="formProduto" class="forma-grupo">
+                <div class="input-wrapper">
+                    <label for="nomeProduto">Nome do Produto</label>
+                    <input 
+                        type="text" 
+                        id="nomeProduto" 
+                        placeholder="Ex: Leite, Iogurte, Pão..."
+                        required
+                    >
+                </div>
+                <div class="input-wrapper">
+                    <label for="dataValidade">Data de Validade</label>
+                    <input 
+                        type="date" 
+                        id="dataValidade"
+                        required
+                    >
+                </div>
+                <button type="submit" class="adicionar">+ Adicionar</button>
+            </form>
+        </div>
+
+        <div class="secao-lista">
+            <div class="titulo-lista">Produtos em Estoque</div>
+            <ul class="lista-produtos" id="listaProdutos">
+                <div class="mensagem-vazia">Nenhum produto adicionado ainda</div>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Recuperar produtos do localStorage
+        let produtos = JSON.parse(localStorage.getItem('produtos')) || [];
+
+        // Elementos do DOM
+        const formProduto = document.getElementById('formProduto');
+        const nomeProdutoInput = document.getElementById('nomeProduto');
+        const dataValidadeInput = document.getElementById('dataValidade');
+        const listaProdutos = document.getElementById('listaProdutos');
+
+        // Função para calcular o status baseado na data
+        function calcularStatus(dataValidade) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+
+            const data = new Date(dataValidade + 'T00:00:00');
+
+            const diferenca = Math.floor((data - hoje) / (1000 * 60 * 60 * 24));
+
+            if (diferenca < 0) {
+                return { status: 'vencido', dias: diferenca, label: '☠️ Vencido' };
+            } else if (diferenca === 0) {
+                return { status: 'hoje', dias: 0, label: '⚠️ Vence Hoje' };
+            } else if (diferenca <= 7) {
+                return { status: 'proximo', dias: diferenca, label: `📅 Vence em ${diferenca}d` };
+            } else {
+                return { status: 'ok', dias: diferenca, label: `✓ ${diferenca} dias` };
+            }
+        }
+
+        // Função para formatar data
+        function formatarData(data) {
+            const date = new Date(data + 'T00:00:00');
+            return date.toLocaleDateString('pt-BR', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric' 
+            });
+        }
+
+        // Função para adicionar produto
+        function adicionarProduto(nome, dataValidade) {
+            const produto = {
+                id: Date.now(),
+                nome: nome,
+                dataValidade: dataValidade
+            };
+
+            produtos.push(produto);
+            salvarProdutos();
+            renderizarLista();
+            formProduto.reset();
+            nomeProdutoInput.focus();
+        }
+
+        // Função para remover produto
+        function removerProduto(id) {
+            produtos = produtos.filter(p => p.id !== id);
+            salvarProdutos();
+            renderizarLista();
+        }
+
+        // Função para salvar no localStorage
+        function salvarProdutos() {
+            localStorage.setItem('produtos', JSON.stringify(produtos));
+        }
+
+        // Função para renderizar a lista
+        function renderizarLista() {
+            if (produtos.length === 0) {
+                listaProdutos.innerHTML = '<div class="mensagem-vazia">Nenhum produto adicionado ainda</div>';
+                return;
+            }
+
+            // Ordenar produtos por urgência
+            const produtosOrdenados = [...produtos].sort((a, b) => {
+                const statusA = calcularStatus(a.dataValidade);
+                const statusB = calcularStatus(b.dataValidade);
+
+                const ordemStatus = { 'vencido': 0, 'hoje': 1, 'proximo': 2, 'ok': 3 };
+
+                if (ordemStatus[statusA.status] !== ordemStatus[statusB.status]) {
+                    return ordemStatus[statusA.status] - ordemStatus[statusB.status];
+                }
+
+                return statusA.dias - statusB.dias;
+            });
+
+            listaProdutos.innerHTML = produtosOrdenados.map(produto => {
+                const statusInfo = calcularStatus(produto.dataValidade);
+
+                return `
+                    <li class="item-produto status-${statusInfo.status}">
+                        <div class="info-produto">
+                            <div class="nome-produto">${produto.nome}</div>
+                            <div class="data-produto">Válido até: ${formatarData(produto.dataValidade)}</div>
+                            <div class="badge-status badge-${statusInfo.status}">
+                                ${statusInfo.label}
+                            </div>
+                        </div>
+                        <button type="button" class="btn-remover" onclick="removerProduto(${produto.id})">
+                            Remover
+                        </button>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        // Event listeners
+        formProduto.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const nome = nomeProdutoInput.value.trim();
+            const dataValidade = dataValidadeInput.value;
+
+            if (nome && dataValidade) {
+                adicionarProduto(nome, dataValidade);
+            }
+        });
+
+        // Renderizar lista ao carregar a página
+        renderizarLista();
+
+        // Atualizar a cada minuto para refletir mudanças de status
+        setInterval(() => {
+            renderizarLista();
+        }, 60000);
+    </script>
+</body>
+</html>

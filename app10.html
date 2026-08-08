@@ -2,13 +2,579 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Backrooms - Web OS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER_SYS // Hardware Diagnostic HUD v5.1</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
-        iframe { width: 100%; height: 100%; border: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff0055;
+            --neon-green: #00ff66;
+            --neon-yellow: #f3e600;
+            --bg-dark: #030308;
+            --panel-bg: rgba(0, 243, 255, 0.03);
+            --border-glow: 0 0 12px rgba(0, 243, 255, 0.25);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scrollbar-width: thin;
+            scrollbar-color: var(--neon-blue) var(--bg-dark);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--neon-blue);
+            font-family: 'Share Tech Mono', monospace;
+            min-height: 100vh;
+            padding: 15px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.02) 1px, transparent 1px);
+            background-size: 25px 25px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .hud-wrapper {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--neon-blue);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .hud-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 8px var(--neon-blue);
+        }
+
+        .hud-status {
+            font-size: 0.8rem;
+            color: var(--neon-green);
+            text-shadow: 0 0 5px var(--neon-green);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--neon-blue);
+            box-shadow: var(--border-glow);
+            padding: 15px;
+            position: relative;
+            clip-path: polygon(
+                0 15px, 15px 0, 
+                100% 0, 
+                100% calc(100% - 15px), calc(100% - 15px) 100%, 
+                0 100%
+            );
+        }
+
+        .panel::after {
+            content: "";
+            position: absolute;
+            top: 4px; right: 4px;
+            width: 6px; height: 6px;
+            background: var(--neon-pink);
+            box-shadow: 0 0 6px var(--neon-pink);
+        }
+
+        .panel-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #fff;
+            margin-bottom: 12px;
+            border-bottom: 1px dashed rgba(0, 243, 255, viola.3);
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            gap: 12px;
+        }
+
+        .data-label {
+            color: #88c0d0;
+            flex-shrink: 0;
+        }
+
+        .data-val {
+            color: #fff;
+            text-align: right;
+            font-weight: bold;
+            word-break: break-all;
+        }
+
+        .alert-box {
+            background: rgba(255, 0, 85, 0.05);
+            border-left: 3px solid var(--neon-pink);
+            padding: 10px;
+            font-size: 0.8rem;
+            color: var(--neon-pink);
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        .action-bar {
+            text-align: center;
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .cyber-btn {
+            background: transparent;
+            color: var(--neon-blue);
+            border: 2px solid var(--neon-blue);
+            padding: 12px 25px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+        }
+
+        .cyber-btn:hover {
+            background: var(--neon-blue);
+            color: var(--bg-dark);
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--neon-blue);
+            height: 10px;
+            margin-top: 5px;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--neon-green);
+            width: 0%;
+            box-shadow: 0 0 8px var(--neon-green);
+            transition: width 0.5s ease;
+        }
+
+        .small-note {
+            font-size: 0.7rem;
+            color: #668;
+            margin-top: 6px;
+        }
     </style>
 </head>
 <body>
-    <iframe src="https://www.crazygames.com/embed/rally-racer-dirt" width="800" height="600" frameborder="0" allowfullscreen></iframe>
+
+    <div class="hud-wrapper">
+        <header>
+            <div class="hud-title">SYS_DIAG // UNIVERSAL_HUD v5.1</div>
+            <div class="hud-status" id="scanStatus">● SISTEMA PRONTO</div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Painel 1: Sistema e SO -->
+            <div class="panel">
+                <div class="panel-title"><span>PLATAFORMA & SO</span><span>[01]</span></div>
+                <div class="data-row"><span class="data-label">User Agent:</span><span class="data-val" id="sysUA">—</span></div>
+                <div class="data-row"><span class="data-label">Plataforma:</span><span class="data-val" id="sysPlatform">—</span></div>
+                <div class="data-row"><span class="data-label">Arquitetura:</span><span class="data-val" id="sysArch">—</span></div>
+                <div class="data-row"><span class="data-label">Idioma:</span><span class="data-val" id="sysLang">—</span></div>
+                <div class="data-row"><span class="data-label">Timezone:</span><span class="data-val" id="sysTZ">—</span></div>
+            </div>
+
+            <!-- Painel 2: Hardware e Tela -->
+            <div class="panel">
+                <div class="panel-title"><span>VÍDEO & TELA</span><span>[02]</span></div>
+                <div class="data-row"><span class="data-label">Resolução:</span><span class="data-val" id="screenRes">—</span></div>
+                <div class="data-row"><span class="data-label">Pixel Ratio:</span><span class="data-val" id="screenDPR">—</span></div>
+                <div class="data-row"><span class="data-label">Cores:</span><span class="data-val" id="screenColor">—</span></div>
+                <div class="data-row"><span class="data-label">Orientação:</span><span class="data-val" id="screenOrient">—</span></div>
+                <div class="data-row"><span class="data-label">Núcleos CPU:</span><span class="data-val" id="cpuCores">—</span></div>
+                <div class="data-row"><span class="data-label">Memória RAM:</span><span class="data-val" id="ramMemory">—</span></div>
+            </div>
+
+            <!-- Painel 3: GPU -->
+            <div class="panel">
+                <div class="panel-title"><span>GPU / WEBGL</span><span>[03]</span></div>
+                <div class="data-row"><span class="data-label">Vendor:</span><span class="data-val" id="gpuVendor">—</span></div>
+                <div class="data-row"><span class="data-label">Renderer:</span><span class="data-val" id="gpuRenderer">—</span></div>
+                <div class="data-row"><span class="data-label">WebGL:</span><span class="data-val" id="gpuWebGL">—</span></div>
+            </div>
+
+            <!-- Painel 4: Bateria -->
+            <div class="panel">
+                <div class="panel-title"><span>ENERGIA / BATERIA</span><span>[04]</span></div>
+                <div class="data-row"><span class="data-label">Status:</span><span class="data-val" id="batStatus">—</span></div>
+                <div class="data-row"><span class="data-label">Carga:</span><span class="data-val" id="batLevel">—</span></div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="batBar"></div>
+                </div>
+                <div class="small-note" id="batNote"></div>
+            </div>
+
+            <!-- Painel 5: Rede & Entradas -->
+            <div class="panel">
+                <div class="panel-title"><span>REDE & ENTRADAS</span><span>[05]</span></div>
+                <div class="data-row"><span class="data-label">Conexão:</span><span class="data-val" id="netOnline">—</span></div>
+                <div class="data-row"><span class="data-label">Tipo de Rede:</span><span class="data-val" id="netType">—</span></div>
+                <div class="data-row"><span class="data-label">Toque:</span><span class="data-val" id="inputTouch">—</span></div>
+                <div class="data-row"><span class="data-label">Gamepads:</span><span class="data-val" id="inputGamepads">—</span></div>
+            </div>
+
+            <!-- Painel 6: Armazenamento -->
+            <div class="panel">
+                <div class="panel-title"><span>ARMAZENAMENTO</span><span>[06]</span></div>
+                <div class="data-row"><span class="data-label">Quota:</span><span class="data-val" id="storageQuota">—</span></div>
+                <div class="data-row"><span class="data-label">Usado:</span><span class="data-val" id="storageUsed">—</span></div>
+                <div class="data-row"><span class="data-label">Disponível:</span><span class="data-val" id="storageFree">—</span></div>
+            </div>
+        </div>
+
+        <!-- Diagnóstico -->
+        <div class="panel" style="margin-bottom: 20px;">
+            <div class="panel-title"><span>DIAGNÓSTICO DE ANOMALIAS & LIMITAÇÕES</span><span>[WARN]</span></div>
+            <div id="defectLog" class="alert-box">
+                > Aguardando varredura...
+            </div>
+        </div>
+
+        <div class="action-bar">
+            <button class="cyber-btn" onclick="runDiagnostics()">ATUALIZAR VARREDURA</button>
+            <button class="cyber-btn" onclick="copyReport()">COPIAR RELATÓRIO</button>
+        </div>
+    </div>
+
+    <script>
+        // ========== UTILITÁRIOS ==========
+        function truncate(str, max = 42) {
+            if (!str) return '—';
+            return str.length > max ? str.substring(0, max) + '…' : str;
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0 || bytes == null) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // ========== GPU / WebGL ==========
+        function getGPUInfo() {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (!gl) {
+                    return { vendor: 'Não suportado', renderer: '—', version: 'WebGL indisponível' };
+                }
+
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                let vendor = 'Desconhecido';
+                let renderer = 'Desconhecido';
+
+                if (debugInfo) {
+                    vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || vendor;
+                    renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || renderer;
+                } else {
+                    vendor = gl.getParameter(gl.VENDOR) || vendor;
+                    renderer = gl.getParameter(gl.RENDERER) || renderer;
+                }
+
+                const version = gl.getParameter(gl.VERSION) || 'WebGL';
+
+                return { vendor, renderer, version };
+            } catch (e) {
+                return { vendor: 'Erro', renderer: '—', version: 'Erro ao detectar' };
+            }
+        }
+
+        // ========== ARQUITETURA MELHORADA ==========
+        async function getArchitecture() {
+            // Tentativa moderna com high-entropy values
+            if (navigator.userAgentData?.getHighEntropyValues) {
+                try {
+                    const values = await navigator.userAgentData.getHighEntropyValues([
+                        'architecture', 'bitness', 'platform', 'model', 'platformVersion'
+                    ]);
+                    const arch = values.architecture || '';
+                    const bitness = values.bitness || '';
+                    if (arch) {
+                        return `${arch}${bitness ? ' (' + bitness + '-bit)' : ''}`.trim();
+                    }
+                } catch (e) { /* continua para fallback */ }
+            }
+
+            // Fallback inteligente
+            const ua = navigator.userAgent.toLowerCase();
+            const platform = (navigator.platform || '').toLowerCase();
+
+            if (navigator.userAgentData?.mobile) return 'Mobile / ARM';
+            if (/arm|aarch64|apple silicon|m1|m2|m3|m4/.test(ua + platform)) return 'ARM (estimado)';
+            if (/x86_64|x64|amd64|wow64/.test(ua + platform)) return 'x64';
+            if (/i[3-6]86|x86/.test(ua + platform)) return 'x86';
+            if (platform.includes('mac')) return 'Apple Silicon / x64 (estimado)';
+            if (platform.includes('win')) return 'x64 (estimado)';
+            if (platform.includes('linux')) return 'x64 / ARM (estimado)';
+
+            return 'Desconhecido';
+        }
+
+        // ========== BATERIA ==========
+        function updateBattery(battery) {
+            const levelPercent = Math.round(battery.level * 100);
+            const charging = battery.charging;
+            const statusText = charging ? `Carregando (${levelPercent}%)` : `Descarga (${levelPercent}%)`;
+
+            document.getElementById('batStatus').textContent = statusText;
+            document.getElementById('batLevel').textContent = levelPercent + '%';
+            document.getElementById('batBar').style.width = levelPercent + '%';
+
+            // Cor da barra conforme nível
+            const bar = document.getElementById('batBar');
+            if (levelPercent <= 20) bar.style.background = 'var(--neon-pink)';
+            else if (levelPercent <= 40) bar.style.background = 'var(--neon-yellow)';
+            else bar.style.background = 'var(--neon-green)';
+
+            let note = '';
+            if (battery.chargingTime !== Infinity && battery.chargingTime > 0) {
+                note = `Tempo p/ carga completa: ~${Math.round(battery.chargingTime / 60)} min`;
+            } else if (battery.dischargingTime !== Infinity && battery.dischargingTime > 0) {
+                note = `Tempo restante estimado: ~${Math.round(battery.dischargingTime / 60)} min`;
+            }
+            document.getElementById('batNote').textContent = note;
+        }
+
+        // ========== GAMEPADS ==========
+        function checkGamepads() {
+            const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+            let count = 0;
+            let names = [];
+            for (const pad of pads) {
+                if (pad) {
+                    count++;
+                    names.push(pad.id || 'Controle');
+                }
+            }
+            const el = document.getElementById('inputGamepads');
+            if (count === 0) {
+                el.textContent = 'Nenhum';
+            } else {
+                el.textContent = `${count} → ${names.join(', ')}`;
+            }
+        }
+
+        // ========== DIAGNÓSTICO PRINCIPAL ==========
+        async function runDiagnostics() {
+            const statusEl = document.getElementById('scanStatus');
+            statusEl.textContent = '● VARREDURA EM ANDAMENTO...';
+            statusEl.style.color = 'var(--neon-yellow)';
+
+            // 1. Sistema básico
+            const ua = navigator.userAgent;
+            document.getElementById('sysUA').textContent = truncate(ua, 38);
+            document.getElementById('sysPlatform').textContent =
+                navigator.userAgentData?.platform || navigator.platform || 'Desconhecido';
+            document.getElementById('sysArch').textContent = await getArchitecture();
+            document.getElementById('sysLang').textContent = navigator.language || navigator.languages?.[0] || '—';
+            document.getElementById('sysTZ').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone || '—';
+
+            // 2. Tela
+            document.getElementById('screenRes').textContent = `${screen.width} × ${screen.height}`;
+            document.getElementById('screenDPR').textContent = window.devicePixelRatio ? window.devicePixelRatio.toFixed(2) + 'x' : '—';
+            document.getElementById('screenColor').textContent = `${screen.colorDepth}-bit`;
+            document.getElementById('screenOrient').textContent =
+                screen.orientation?.type || (window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
+
+            document.getElementById('cpuCores').textContent =
+                navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} threads` : 'Oculto';
+            document.getElementById('ramMemory').textContent =
+                navigator.deviceMemory ? `~${navigator.deviceMemory} GB` : 'Protegido / N/D';
+
+            // 3. GPU
+            const gpu = getGPUInfo();
+            document.getElementById('gpuVendor').textContent = truncate(gpu.vendor, 32);
+            document.getElementById('gpuRenderer').textContent = truncate(gpu.renderer, 36);
+            document.getElementById('gpuWebGL').textContent = truncate(gpu.version, 28);
+
+            // 4. Bateria
+            if ('getBattery' in navigator) {
+                try {
+                    const battery = await navigator.getBattery();
+                    updateBattery(battery);
+                    battery.addEventListener('levelchange', () => updateBattery(battery));
+                    battery.addEventListener('chargingchange', () => updateBattery(battery));
+                    document.getElementById('batNote').textContent = '';
+                } catch (e) {
+                    document.getElementById('batStatus').textContent = 'Erro ao ler bateria';
+                    document.getElementById('batLevel').textContent = 'N/D';
+                }
+            } else {
+                document.getElementById('batStatus').textContent = 'API indisponível';
+                document.getElementById('batLevel').textContent = 'N/D';
+                document.getElementById('batBar').style.width = '0%';
+                document.getElementById('batNote').textContent = 'Comum em desktops e alguns navegadores';
+            }
+
+            // 5. Rede
+            document.getElementById('netOnline').textContent = navigator.onLine ? 'ONLINE' : 'OFFLINE';
+            document.getElementById('netOnline').style.color = navigator.onLine ? 'var(--neon-green)' : 'var(--neon-pink)';
+
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (conn) {
+                const type = (conn.effectiveType || conn.type || 'genérico').toUpperCase();
+                const down = conn.downlink ? `${conn.downlink} Mbps` : '?';
+                const rtt = conn.rtt ? ` | RTT ${conn.rtt}ms` : '';
+                document.getElementById('netType').textContent = `${type} (${down}${rtt})`;
+            } else {
+                document.getElementById('netType').textContent = 'Não disponível neste navegador';
+            }
+
+            // Touch
+            const touchPoints = navigator.maxTouchPoints || 0;
+            const hasTouch = 'ontouchstart' in window || touchPoints > 0;
+            document.getElementById('inputTouch').textContent =
+                hasTouch ? `Sim (${touchPoints} pontos)` : 'Não (mouse/teclado)';
+
+            // Gamepads
+            checkGamepads();
+            window.removeEventListener('gamepadconnected', checkGamepads);
+            window.removeEventListener('gamepaddisconnected', checkGamepads);
+            window.addEventListener('gamepadconnected', checkGamepads);
+            window.addEventListener('gamepaddisconnected', checkGamepads);
+
+            // 6. Storage
+            if (navigator.storage?.estimate) {
+                try {
+                    const est = await navigator.storage.estimate();
+                    const quota = est.quota || 0;
+                    const usage = est.usage || 0;
+                    document.getElementById('storageQuota').textContent = formatBytes(quota);
+                    document.getElementById('storageUsed').textContent = formatBytes(usage);
+                    document.getElementById('storageFree').textContent = formatBytes(quota - usage);
+                } catch (e) {
+                    document.getElementById('storageQuota').textContent = 'Erro';
+                    document.getElementById('storageUsed').textContent = '—';
+                    document.getElementById('storageFree').textContent = '—';
+                }
+            } else {
+                document.getElementById('storageQuota').textContent = 'API indisponível';
+                document.getElementById('storageUsed').textContent = '—';
+                document.getElementById('storageFree').textContent = '—';
+            }
+
+            // 7. Anomalias / Notas
+            const defects = [];
+
+            if (!navigator.cookieEnabled) defects.push('[!] Cookies desativados');
+            if (screen.width < 400) defects.push('[i] Display de baixa resolução');
+            if (!('getBattery' in navigator)) defects.push('[i] API de bateria bloqueada (normal em desktops)');
+            if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2)
+                defects.push('[!] Poucos núcleos lógicos detectados');
+            if (!navigator.deviceMemory) defects.push('[i] deviceMemory oculto pelo navegador');
+            if (!navigator.connection) defects.push('[i] Network Information API não disponível');
+            if (window.devicePixelRatio > 2.5) defects.push('[i] Display de alta densidade (HiDPI)');
+            if (!navigator.onLine) defects.push('[!] Dispositivo offline no momento da varredura');
+
+            const log = document.getElementById('defectLog');
+            if (defects.length === 0) {
+                log.innerHTML = '> Nenhuma anomalia crítica detectada na camada do navegador.';
+                log.style.color = 'var(--neon-green)';
+                log.style.borderColor = 'var(--neon-green)';
+            } else {
+                log.innerHTML = defects.join('<br>');
+                log.style.color = 'var(--neon-pink)';
+                log.style.borderColor = 'var(--neon-pink)';
+            }
+
+            // Finaliza status
+            setTimeout(() => {
+                statusEl.textContent = '● SISTEMA ONLINE';
+                statusEl.style.color = 'var(--neon-green)';
+            }, 450);
+        }
+
+        // ========== COPIAR RELATÓRIO ==========
+        function copyReport() {
+            const lines = [
+                '=== CYBER_SYS DIAGNOSTIC REPORT ===',
+                `Data: ${new Date().toLocaleString()}`,
+                '',
+                `UA: ${navigator.userAgent}`,
+                `Plataforma: ${document.getElementById('sysPlatform').textContent}`,
+                `Arquitetura: ${document.getElementById('sysArch').textContent}`,
+                `Resolução: ${document.getElementById('screenRes').textContent}`,
+                `DPR: ${document.getElementById('screenDPR').textContent}`,
+                `CPU: ${document.getElementById('cpuCores').textContent}`,
+                `RAM: ${document.getElementById('ramMemory').textContent}`,
+                `GPU: ${document.getElementById('gpuVendor').textContent} | ${document.getElementById('gpuRenderer').textContent}`,
+                `Rede: ${document.getElementById('netType').textContent}`,
+                `Online: ${document.getElementById('netOnline').textContent}`,
+                ''
+            ];
+            navigator.clipboard.writeText(lines.join('\n')).then(() => {
+                const btn = event.target;
+                const old = btn.textContent;
+                btn.textContent = 'COPIADO!';
+                setTimeout(() => btn.textContent = old, 1500);
+            });
+        }
+
+        // Executa ao carregar
+        window.addEventListener('load', runDiagnostics);
+
+        // Atualiza orientação automaticamente
+        window.addEventListener('orientationchange', () => {
+            setTimeout(runDiagnostics, 300);
+        });
+    </script>
 </body>
 </html>
