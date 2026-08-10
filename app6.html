@@ -949,6 +949,56 @@ button,select,input{touch-action:manipulation;}
 }
 </style>
 
+
+<style>
+.provisional-marker{
+    width:42px;height:42px;border:1px solid #00ffcc;border-radius:50%;
+    position:relative;background:rgba(0,20,20,.28);
+    box-shadow:0 0 12px rgba(0,255,204,.65),inset 0 0 8px rgba(0,255,204,.22);
+}
+.provisional-marker:before,.provisional-marker:after{
+    content:"";position:absolute;background:#00ffcc;
+    left:50%;top:50%;transform:translate(-50%,-50%);
+    box-shadow:0 0 7px #00ffcc;
+}
+.provisional-marker:before{width:58px;height:1px}
+.provisional-marker:after{height:58px;width:1px}
+.marker-popup{
+    min-width:190px;
+    font-family:'Share Tech Mono',monospace;
+    color:#00ffcc;
+}
+.marker-popup .marker-title{
+    font-size:11px;letter-spacing:1px;margin-bottom:7px;
+}
+.marker-popup .marker-coord{
+    font-size:10px;line-height:1.5;margin-bottom:8px;
+}
+.marker-popup .marker-actions{
+    display:grid;grid-template-columns:1fr 1fr;gap:5px;
+}
+.marker-popup button{
+    min-height:32px;padding:5px 6px;cursor:pointer;
+    background:rgba(0,255,204,.08);border:1px solid #00ffcc;
+    color:#00ffcc;font:9px 'Share Tech Mono',monospace;
+    letter-spacing:.5px;
+}
+.marker-popup button:hover{
+    background:#00ffcc;color:#030507;
+    box-shadow:0 0 9px rgba(0,255,204,.65);
+}
+.marker-popup button.danger{
+    border-color:#ff3366;color:#ff3366;
+}
+.marker-popup button.danger:hover{
+    background:#ff3366;color:#fff;
+}
+@media(max-width:600px){
+    .marker-popup{min-width:170px}
+    .marker-popup button{min-height:36px;font-size:9px}
+}
+</style>
+
 </head>
 <body>
     
@@ -1475,6 +1525,130 @@ button,select,input{touch-action:manipulation;}
         updateColor();
         updateSize();
     </script>
+
+
+<script>
+/* ===== MARCADOR PROVISÓRIO ÚNICO ===== */
+let provisionalMarker = null;
+let provisionalCoords = null;
+
+function createProvisionalMarker(latlng){
+    // Único: criar outro sempre elimina o anterior.
+    if (provisionalMarker) {
+        map.removeLayer(provisionalMarker);
+        provisionalMarker = null;
+    }
+
+    provisionalCoords = {
+        lat: Number(latlng.lat),
+        lng: Number(latlng.lng)
+    };
+
+    const icon = L.divIcon({
+        className: '',
+        html: '<div class="provisional-marker"></div>',
+        iconSize: [42,42],
+        iconAnchor: [21,21],
+        popupAnchor: [0,-24]
+    });
+
+    provisionalMarker = L.marker([provisionalCoords.lat, provisionalCoords.lng], {
+        icon: icon,
+        keyboard: false,
+        zIndexOffset: 3000,
+        draggable: false
+    }).addTo(map);
+
+    provisionalMarker.bindPopup(buildProvisionalPopup(), {
+        closeButton: true,
+        autoClose: true,
+        closeOnClick: false,
+        maxWidth: 260
+    }).openPopup();
+
+    setTelemetry(
+        'MARCADOR PROVISÓRIO | LAT: ' +
+        provisionalCoords.lat.toFixed(6) +
+        ' | LNG: ' +
+        provisionalCoords.lng.toFixed(6)
+    );
+}
+
+function buildProvisionalPopup(){
+    if (!provisionalCoords) return '';
+
+    const lat = provisionalCoords.lat.toFixed(6);
+    const lng = provisionalCoords.lng.toFixed(6);
+
+    return `
+        <div class="marker-popup">
+            <div class="marker-title">◉ MARCADOR PROVISÓRIO</div>
+            <div class="marker-coord">
+                LAT: ${lat}<br>
+                LNG: ${lng}
+            </div>
+            <div class="marker-actions">
+                <button onclick="copyProvisionalCoordinates()">⌘ COPIAR COORD.</button>
+                <button class="danger" onclick="removeProvisionalMarker()">⌧ ELIMINAR</button>
+            </div>
+        </div>
+    `;
+}
+
+async function copyProvisionalCoordinates(){
+    if (!provisionalCoords) return;
+
+    const text =
+        provisionalCoords.lat.toFixed(6) + ', ' +
+        provisionalCoords.lng.toFixed(6);
+
+    try {
+        await navigator.clipboard.writeText(text);
+        setTelemetry('COORDENADAS COPIADAS | ' + text);
+    } catch (err) {
+        // Fallback para ambientes onde Clipboard API não está disponível.
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+
+        try {
+            document.execCommand('copy');
+            setTelemetry('COORDENADAS COPIADAS | ' + text);
+        } catch(e) {
+            setTelemetry('FALHA AO COPIAR COORDENADAS');
+        }
+
+        document.body.removeChild(ta);
+    }
+}
+
+function removeProvisionalMarker(){
+    if (provisionalMarker) {
+        map.removeLayer(provisionalMarker);
+    }
+
+    provisionalMarker = null;
+    provisionalCoords = null;
+    setTelemetry('MARCADOR PROVISÓRIO ELIMINADO');
+}
+
+function handleProvisionalMapClick(e){
+    // Não cria marcador quando estiver desenhando.
+    if (drawingEnabled) return;
+
+    createProvisionalMarker(e.latlng);
+}
+
+/*
+ * O clique usado para posicionar o marcador é separado
+ * do clique que apenas atualiza o readout.
+ */
+map.on('click', handleProvisionalMapClick);
+</script>
 
 <script>
 function searchCoordinates(){

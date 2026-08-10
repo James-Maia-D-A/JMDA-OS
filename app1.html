@@ -1,65 +1,493 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Editor Web OS - Salvar</title>
-    <!-- Importando o design do Quill.js -->
-    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
-    <style>
-        body { background: #1e1e1e; color: #fff; font-family: sans-serif; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        #editor-container { width: 80%; height: 300px; background: #fff; color: #000; margin-top: 10px; }
-        .toolbar-buttons { margin-top: 15px; display: flex; gap: 10px; }
-        button { padding: 10px 15px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; background: #444; color: white; }
-        button:hover { background: #666; }
-        #btn-pdf { background: #d32f2f; }
-        #btn-html { background: #1976d2; }
-        #btn-txt { background: #388e3c; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TACTICAL WORD // A4</title>
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+<style>
+:root{
+  --bg:#090b0d;--panel:#111519;--panel2:#171c20;--line:#354149;
+  --text:#e8edf0;--muted:#9aa7ae;--accent:#e13a3a;--paper:#fff;--ink:#16191b;
+  --cyan:#28b8d8;--green:#42c77a;--amber:#e7ad3f;--blue:#4c9cff;
+  --page-w:210mm;--page-h:297mm;--margin:18mm;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+button,select,input{font:inherit}
+button{border:1px solid var(--line);background:#151a1e;color:var(--text);cursor:pointer}
+button:hover{border-color:#687780;background:#20282e}
+button:active{transform:translateY(1px)}
+.app{height:100dvh;display:grid;grid-template-rows:auto auto 1fr auto;overflow:hidden}
+.header{min-height:58px;background:linear-gradient(180deg,#12171b,#0e1215);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:8px 14px;z-index:10}
+.brand{display:flex;align-items:center;gap:10px;min-width:190px}
+.logo{width:32px;height:32px;border:2px solid var(--accent);display:grid;place-items:center;font-weight:900;color:var(--accent);transform:skew(-8deg)}
+.brand strong{font-size:13px;letter-spacing:2px}.brand small{display:block;color:var(--muted);font-size:9px;letter-spacing:1.5px;margin-top:2px}
+.docname{flex:1;display:flex;align-items:center;gap:7px;min-width:80px}
+.docname input{width:100%;max-width:360px;background:transparent;border:0;border-bottom:1px solid #39434a;color:#fff;padding:6px 3px;outline:none;font-weight:700}
+.indicators{display:flex;gap:7px;align-items:center;color:var(--muted);font-size:10px}
+.badge{padding:5px 7px;border:1px solid var(--line);background:#0d1114;letter-spacing:1px}
+.ready{color:#7fcf91}.ready i{display:inline-block;width:6px;height:6px;background:#62c879;border-radius:50%;margin-right:5px}
+.actions{display:flex;gap:5px;flex-shrink:0;overflow-x:auto;max-width:48vw;padding-bottom:1px}
+.actions::-webkit-scrollbar{height:2px}.actions button{padding:7px 9px;font-size:10px;font-weight:900;letter-spacing:.7px;color:#eef3f5;white-space:nowrap}
+.actions button:nth-child(1){border-color:#31586a;background:#172d37;color:#59c7e2}
+.actions button:nth-child(2){border-color:#356a4b;background:#172a20;color:#65d48b}
+.actions button:nth-child(3){border-color:#365b83;background:#172638;color:#65a9ed}
+.actions button:nth-child(4){border-color:#70562b;background:#2b2518;color:#e9c05d}
+.actions button:nth-child(5){border-color:#5b477b;background:#241c31;color:#c79aff}
+.actions .primary{border-color:#a93636;background:#642020;color:#fff}
+.toolbar{background:#101417;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:6px 10px;z-index:5}
+.tool{min-width:30px;height:30px;padding:0 7px;font-weight:900;color:#eef3f5;background:#20282e;border:1px solid #46535c;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025)}
+.tool:hover{color:#fff;background:#2b363d;border-color:#687780}.tool.text{font-size:12px;color:#fff}
+.toolbar .ql-header,.toolbar select{height:30px;color:#e8edf0;border:1px solid #46535c;background:#20282e;padding:0 6px;font-size:11px}
+.toolbar .ql-color,.toolbar .ql-background{background:#20282e;border-color:#46535c}
+.sep{width:1px;height:24px;background:#46535c;margin:0 3px}
+.workspace{overflow:auto;position:relative;background:radial-gradient(circle at 50% 15%,rgba(255,255,255,.035),transparent 30%),repeating-linear-gradient(0deg,transparent 0 31px,rgba(255,255,255,.018) 32px),#090c0f}
+.pages{padding:32px 20px 55px;display:flex;flex-direction:column;align-items:center;gap:28px;min-height:100%}
+.page{width:var(--page-w);min-height:var(--page-h);background:var(--paper);color:var(--ink);box-shadow:0 12px 45px rgba(0,0,0,.55);position:relative;display:flex;flex-direction:column}
+.page-head,.page-foot{height:13mm;flex:0 0 13mm;padding:4mm var(--margin);font-size:8px;color:#778087;letter-spacing:1px;display:flex;justify-content:space-between}
+.page-head{border-bottom:1px solid #e4e6e7}.page-foot{border-top:1px solid #e4e6e7;margin-top:auto}
+.editor-wrap{padding:0 var(--margin);flex:1;min-height:0}
+#editor{min-height:calc(var(--page-h) - 26mm);border:0!important}
+.ql-container.ql-snow{border:0!important;font-family:Arial,Helvetica,sans-serif;font-size:11pt}
+.ql-editor{padding:0!important;min-height:100%;line-height:1.45;overflow:visible}
+.ql-editor h1{font-size:25pt}.ql-editor h2{font-size:19pt}.ql-editor h3{font-size:15pt}
+.ql-editor img{max-width:100%;height:auto}.ql-editor pre.ql-syntax{white-space:pre-wrap}
+.status{height:31px;background:#0d1114;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 12px;color:var(--muted);font-size:9px;letter-spacing:.7px;gap:10px;z-index:10}
+.status span{white-space:nowrap}.status .hot{color:#d8dee2}.status .accent{color:var(--accent)}
+.panel{position:fixed;right:14px;bottom:45px;background:#11161a;border:1px solid var(--line);padding:10px;display:none;z-index:20;box-shadow:0 10px 35px #000b;width:220px}
+.panel.open{display:block}.panel h4{margin:0 0 8px;font-size:10px;letter-spacing:1.5px;color:#9aa5ab}
+.panel label{display:flex;justify-content:space-between;align-items:center;font-size:10px;margin:7px 0;color:#b8c0c5}
+.panel input,.panel select{background:#0b0f12;border:1px solid var(--line);color:#fff;padding:5px;width:100px}
+.toast{position:fixed;left:50%;bottom:50px;transform:translateX(-50%) translateY(20px);opacity:0;transition:.2s;z-index:50;background:#11181c;border:1px solid #46535b;padding:8px 12px;font-size:10px;letter-spacing:.5px;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:800px){
+ .header{padding:7px 8px;gap:7px}.brand{min-width:auto}.brand small,.indicators .badge:nth-child(2){display:none}
+ .brand strong{font-size:11px}.docname input{max-width:none}.actions button{font-size:0;width:31px;padding:0}.actions button::first-letter{font-size:13px}
+ .toolbar{overflow-x:auto;flex-wrap:nowrap;padding:5px 7px}.toolbar::-webkit-scrollbar{height:2px}
+ .workspace{background:#07090b}.pages{padding:16px 8px 35px;gap:18px}
+ .page{transform-origin:top center}
+}
+@media(max-width:480px){
+ :root{--margin:13mm}.header{min-height:52px}.logo{width:28px;height:28px}.brand strong{font-size:10px;letter-spacing:1px}
+ .docname{min-width:0}.docname input{font-size:11px}.actions{gap:3px}.actions button{width:auto;min-width:28px;height:28px}
+ .status{height:28px;padding:0 7px;overflow:hidden}.status span:nth-child(n+4){display:none}
+}
+@page{size:A4 portrait;margin:0}
+@media print{
+ html,body{height:auto;overflow:visible;background:#fff}.app{display:block;height:auto}
+ .header,.toolbar,.status,.panel,.toast{display:none!important}.workspace{overflow:visible;background:#fff}.pages{display:block;padding:0}
+ .page{width:var(--page-w);height:var(--page-h);min-height:var(--page-h);box-shadow:none;page-break-after:always;break-after:page}
+ .page:last-child{page-break-after:auto}
+}
+</style>
 </head>
 <body>
-    <h2>Editor de Texto (Web OS)</h2>
-    <div id="editor-container"></div>
+<div class="app">
+<header class="header">
+  <div class="brand"><div class="logo">TW</div><div><strong>TACTICAL WORD</strong><small>DOCUMENT SYSTEM // A4</small></div></div>
+  <div class="docname"><span style="color:#69757d">DOC://</span><input id="docTitle" value="documento-01" aria-label="Nome do documento"></div>
+  <div class="indicators"><span class="badge">A4</span><span class="badge" id="orientationBadge">PORTRAIT</span><span class="badge ready"><i></i>READY</span></div>
+  <div class="actions">
+    <button onclick="newDoc()">＋ NOVO</button>
+    <button onclick="openFile()">↥ ABRIR</button>
+    <input id="fileInput" type="file" hidden accept=".html,.htm,.txt,.docx,.doc">
+    <button onclick="saveLocal()">▣ SALVAR</button>
+    <button onclick="exportHTML()">HTML</button>
+    <button onclick="exportTXT()">TXT</button>
+    <button onclick="exportDOCX()">WORD</button>
+    <button onclick="printDoc()" class="primary">↳ PDF</button>
+    <button onclick="togglePanel()">⚙</button>
+  </div>
+</header>
 
-    <div class="toolbar-buttons">
-        <button id="btn-html" onclick="salvarComo('html')">Salvar como HTML</button>
-        <button id="btn-txt" onclick="salvarComo('txt')">Salvar como TXT</button>
-        <button id="btn-pdf" onclick="salvarComo('pdf')">Salvar como PDF</button>
-    </div>
+<div id="toolbar" class="toolbar">
+  <select class="ql-header" title="Título"><option selected></option><option value="1">H1</option><option value="2">H2</option><option value="3">H3</option></select>
+  <button class="tool text ql-bold">B</button><button class="tool text ql-italic">I</button><button class="tool text ql-underline">U</button><button class="tool text ql-strike">S</button>
+  <span class="sep"></span>
+  <button class="tool ql-list" value="ordered">1.</button><button class="tool ql-list" value="bullet">•</button>
+  <button class="tool ql-blockquote">❝</button><button class="tool ql-code-block">&lt;/&gt;</button>
+  <span class="sep"></span>
+  <button class="tool ql-align" value="">≡</button><button class="tool ql-align" value="center">≡</button><button class="tool ql-align" value="right">≡</button>
+  <button class="tool ql-indent" value="-1">←</button><button class="tool ql-indent" value="+1">→</button>
+  <span class="sep"></span>
+  <select class="ql-color" title="Cor"></select><select class="ql-background" title="Fundo"></select>
+  <button class="tool ql-link">↗</button><button class="tool ql-image">▧</button>
+  <button class="tool" onclick="insertBreak()" title="Quebra de página">╫</button>
+  <button class="tool" onclick="clearFormat()" title="Limpar formatação">⌫</button>
+  <span style="flex:1"></span>
+  <select id="zoom" onchange="setZoom(this.value)" title="Zoom"><option>50</option><option>75</option><option selected>100</option><option>125</option><option>150</option></select>
+</div>
 
-    <!-- Importando o script do Quill.js -->
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-    <script>
-        const quill = new Quill('#editor-container', {
-            theme: 'snow'
-        });
+<main class="workspace" id="workspace">
+  <div class="pages" id="pages">
+    <section class="page">
+      <div class="page-head"><span id="headTitle">DOCUMENTO // 01</span><span>A4 / TACTICAL WORD</span></div>
+      <div class="editor-wrap"><div id="editor"></div></div>
+      <div class="page-foot"><span>CLASSIFICATION: LOCAL</span><span>PÁG <b>01</b></span></div>
+    </section>
+  </div>
+</main>
 
-        function salvarComo(tipo) {
-            let conteudo = '';
-            let extensao = '';
-            let mimeType = '';
+<footer class="status">
+  <span>DOC: <b class="hot" id="statusDoc">documento-01</b></span>
+  <span>PÁG: <b class="hot" id="pageCount">01/01</b></span>
+  <span>PALAVRAS: <b class="hot" id="wordCount">0</b></span>
+  <span>CARACTERES: <b class="hot" id="charCount">0</b></span>
+  <span>ZOOM: <b class="hot" id="zoomLabel">100%</b></span>
+  <span style="color:var(--cyan)">OPEN: HTML/TXT/WORD</span><span class="accent" id="saveState">AUTOSAVE ●</span>
+</footer>
+</div>
 
-            if (tipo === 'html') {
-                conteudo = quill.root.innerHTML;
-                extensao = 'html';
-                mimeType = 'text/html';
-                baixarArquivo(conteudo, extensao, mimeType);
-            } else if (tipo === 'txt') {
-                conteudo = quill.getText();
-                extensao = 'txt';
-                mimeType = 'text/plain';
-                baixarArquivo(conteudo, extensao, mimeType);
-            } else if (tipo === 'pdf') {
-                window.print();
+<div class="panel" id="settingsPanel">
+  <h4>DOCUMENT CONFIG // A4</h4>
+  <label>Orientação <select id="orientation" onchange="setOrientation(this.value)"><option value="portrait">Retrato</option><option value="landscape">Paisagem</option></select></label>
+  <label>Margens <select id="margin" onchange="setMargin(this.value)"><option value="12">12 mm</option><option value="18" selected>18 mm</option><option value="25">25 mm</option></select></label>
+  <button style="width:100%;padding:7px;margin-top:6px" onclick="togglePanel()">FECHAR</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.9.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@9.5.1/build/index.umd.js"></script>
+<script>
+'use strict';
+
+const quill = new Quill('#editor',{
+  theme:'snow',
+  modules:{toolbar:'#toolbar',history:{delay:500,maxStack:100,userOnly:true}},
+  placeholder:'Comece a escrever seu documento...'
+});
+
+const title=document.getElementById('docTitle');
+const STORAGE='tactical-word-a4-v2';
+const orientationEl=document.getElementById('orientation');
+const marginEl=document.getElementById('margin');
+const fileInput=document.getElementById('fileInput');
+let autoTimer=null;
+let lastSavedHtml='';
+
+function currentSettings(){
+  return {orientation:orientationEl.value,margin:marginEl.value};
+}
+
+function sync(){
+  const text=quill.getText().replace(/\n+$/,'');
+  const words=text.trim()?text.trim().split(/\s+/).length:0;
+  document.getElementById('wordCount').textContent=words;
+  document.getElementById('charCount').textContent=text.length;
+  document.getElementById('statusDoc').textContent=title.value.trim()||'sem-nome';
+  document.getElementById('headTitle').textContent='DOCUMENTO // '+(title.value.trim()||'01').toUpperCase();
+  document.getElementById('saveState').textContent=quill.root.innerHTML===lastSavedHtml?'SALVO ●':'AUTOSAVE ●';
+  updatePageCount();
+}
+
+function updatePageCount(){
+  const editor=quill.root;
+  const availablePx=mmToPx(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h')))-mmToPx(26);
+  const count=Math.max(1,Math.ceil(Math.max(editor.scrollHeight,1)/Math.max(availablePx,1)));
+  document.getElementById('pageCount').textContent=String(count).padStart(2,'0')+'/'+String(count).padStart(2,'0');
+  const foot=document.querySelector('.page-foot b');
+  if(foot) foot.textContent='01';
+}
+
+function mmToPx(mm){ return mm*(96/25.4); }
+
+function scheduleSave(){
+  clearTimeout(autoTimer);
+  document.getElementById('saveState').textContent='SALVANDO…';
+  autoTimer=setTimeout(()=>saveLocal(true),600);
+}
+
+quill.on('text-change',()=>{sync();scheduleSave();});
+title.addEventListener('input',()=>{sync();scheduleSave();});
+
+function saveLocal(silent=false){
+  try{
+    const data={version:2,title:title.value.trim()||'documento-01',html:quill.root.innerHTML,...currentSettings()};
+    localStorage.setItem(STORAGE,JSON.stringify(data));
+    lastSavedHtml=quill.root.innerHTML;
+    document.getElementById('saveState').textContent='SALVO ●';
+    if(!silent) toast('DOCUMENTO SALVO LOCALMENTE');
+  }catch(err){
+    console.error(err);
+    document.getElementById('saveState').textContent='ERRO AO SALVAR';
+    if(!silent) toast('ERRO AO SALVAR LOCALMENTE');
+  }
+}
+
+function loadLocal(){
+  try{
+    const raw=localStorage.getItem(STORAGE);
+    if(!raw)return;
+    const d=JSON.parse(raw);
+    title.value=d.title||'documento-01';
+    if(d.html) quill.clipboard.dangerouslyPasteHTML(0,d.html,'api');
+    if(d.orientation){
+      orientationEl.value=d.orientation;
+      applyOrientation(d.orientation,false);
+    }
+    if(d.margin){
+      marginEl.value=d.margin;
+      applyMargin(d.margin,false);
+    }
+    lastSavedHtml=quill.root.innerHTML;
+  }catch(err){console.warn('Falha ao carregar autosave:',err);}
+}
+
+function newDoc(){
+  if(quill.getText().trim() && !confirm('Criar novo documento e apagar o conteúdo atual?'))return;
+  title.value='documento-'+String(Date.now()).slice(-4);
+  quill.setText('');
+  lastSavedHtml='';
+  saveLocal(true);
+  sync();
+  toast('NOVO DOCUMENTO');
+}
+
+function openFile(){fileInput.click();}
+
+fileInput.addEventListener('change',async function(){
+  const file=this.files?.[0];
+  if(!file)return;
+  const ext=file.name.toLowerCase().split('.').pop();
+  try{
+    if(ext==='txt'){
+      quill.setText(await file.text());
+    }else if(ext==='html'||ext==='htm'){
+      const html=await file.text();
+      const parsed=new DOMParser().parseFromString(html,'text/html');
+      quill.setContents([]);
+      quill.clipboard.dangerouslyPasteHTML(0,parsed.body?.innerHTML||html,'api');
+    }else if(ext==='docx'){
+      if(!window.mammoth)throw new Error('Leitor DOCX não carregado. Verifique sua conexão.');
+      const result=await mammoth.convertToHtml({arrayBuffer:await file.arrayBuffer()});
+      quill.setContents([]);
+      quill.clipboard.dangerouslyPasteHTML(0,result.value||'','api');
+      if(result.messages?.length)console.warn('Avisos Mammoth:',result.messages);
+    }else if(ext==='doc'){
+      throw new Error('O formato .DOC antigo não pode ser lido com segurança no navegador. Abra no Word/LibreOffice e salve como .DOCX.');
+    }else{
+      throw new Error('Formato não suportado. Use HTML, HTM, TXT ou DOCX.');
+    }
+    title.value=file.name.replace(/\.[^.]+$/,'')||'documento';
+    lastSavedHtml='';
+    sync();
+    saveLocal(true);
+    toast('ARQUIVO ABERTO: '+file.name);
+  }catch(err){
+    console.error(err);
+    toast(err.message||'ERRO AO ABRIR ARQUIVO');
+  }finally{
+    this.value='';
+  }
+});
+
+function quillLinesToDocx(){
+  const {Paragraph,TextRun,HeadingLevel,AlignmentType}=docx;
+  const delta=quill.getContents();
+  const paragraphs=[];
+  let runs=[];
+  let lineAttrs={};
+
+  function flushLine(){
+    const textRuns=runs.length?runs:[new TextRun('')];
+    let alignment=AlignmentType.LEFT;
+    if(lineAttrs.align==='center')alignment=AlignmentType.CENTER;
+    else if(lineAttrs.align==='right')alignment=AlignmentType.RIGHT;
+    else if(lineAttrs.align==='justify')alignment=AlignmentType.JUSTIFIED;
+
+    let heading;
+    if(lineAttrs.header===1)heading=HeadingLevel.HEADING_1;
+    else if(lineAttrs.header===2)heading=HeadingLevel.HEADING_2;
+    else if(lineAttrs.header===3)heading=HeadingLevel.HEADING_3;
+
+    paragraphs.push(new Paragraph({children:textRuns,alignment,heading}));
+    runs=[];lineAttrs={};
+  }
+
+  for(const op of delta.ops){
+    const a=op.attributes||{};
+    if(typeof op.insert==='string'){
+      const pieces=op.insert.split('\n');
+      pieces.forEach((part,i)=>{
+        if(part){
+          runs.push(new TextRun({
+            text:part,bold:!!a.bold,italics:!!a.italic,
+            underline:a.underline?{}:undefined,strike:!!a.strike,
+            color:typeof a.color==='string'&&a.color.startsWith('#')?a.color.slice(1):undefined
+          }));
+        }
+        if(i<pieces.length-1){Object.assign(lineAttrs,a);flushLine();}
+      });
+    }else{
+      runs.push(new TextRun('[elemento multimídia]'));
+    }
+  }
+  if(runs.length||paragraphs.length===0)flushLine();
+  return paragraphs;
+}
+
+async function exportDOCX(){
+  if(!window.docx){toast('BIBLIOTECA WORD NÃO CARREGADA');return;}
+  try{
+    const {Document,Packer,convertMillimetersToTwip}=docx;
+    const landscape=orientationEl.value==='landscape';
+    const margin=Number(marginEl.value);
+    const d=new Document({
+      sections:[{
+        properties:{
+          page:{
+            orientation:landscape?'landscape':'portrait',
+            size:{
+              width:convertMillimetersToTwip(landscape?297:210),
+              height:convertMillimetersToTwip(landscape?210:297)
+            },
+            margin:{
+              top:convertMillimetersToTwip(margin),bottom:convertMillimetersToTwip(margin),
+              left:convertMillimetersToTwip(margin),right:convertMillimetersToTwip(margin)
             }
-        }
+          }
+        },
+        children:quillLinesToDocx()
+      }]
+    });
+    const blob=await Packer.toBlob(d);
+    downloadBlob(blob,safeFilename()+'.docx');
+    toast('WORD EXPORTADO');
+  }catch(err){
+    console.error(err);toast('ERRO AO GERAR WORD');
+  }
+}
 
-        function baixarArquivo(conteudo, extensao, mimeType) {
-            const blob = new Blob([conteudo], { type: mimeType });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'documento.' + extensao;
-            link.click();
-        }
-    </script>
+function printDoc(){
+  saveLocal(true);
+  window.print();
+}
+
+function downloadBlob(blob,filename){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function downloadFile(content,filename,mime){
+  downloadBlob(new Blob([content],{type:mime+';charset=utf-8'}),filename);
+}
+
+function safeFilename(){
+  return(title.value||'documento').trim()
+    .replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'-')
+    .replace(/-+/g,'-').replace(/^-|-$/g,'')||'documento';
+}
+
+function exportTXT(){
+  downloadFile(quill.getText(),safeFilename()+'.txt','text/plain');
+  toast('TXT EXPORTADO');
+}
+
+function exportHTML(){
+  const docTitle=title.value.trim()||'Documento';
+  const content=quill.root.innerHTML;
+  const landscape=orientationEl.value==='landscape';
+  const margin=Number(marginEl.value);
+  const exported=`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(docTitle)}</title>
+<style>
+@page{size:A4 ${landscape?'landscape':'portrait'};margin:${margin}mm}
+body{font-family:Arial,Helvetica,sans-serif;font-size:11pt;line-height:1.45;color:#16191b;max-width:${landscape?'261':'174'}mm;margin:auto}
+img{max-width:100%;height:auto}h1{font-size:25pt}h2{font-size:19pt}h3{font-size:15pt}
+blockquote{border-left:4px solid #777;padding-left:12px;color:#555}
+pre{white-space:pre-wrap}
+</style>
+</head><body>${content}</body></html>`;
+  downloadFile(exported,safeFilename()+'.html','text/html');
+  toast('HTML EXPORTADO');
+}
+
+function escapeHtml(value){
+  return String(value).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
+function togglePanel(){document.getElementById('settingsPanel').classList.toggle('open');}
+
+function applyOrientation(v,persist=true){
+  const landscape=v==='landscape';
+  document.documentElement.style.setProperty('--page-w',landscape?'297mm':'210mm');
+  document.documentElement.style.setProperty('--page-h',landscape?'210mm':'297mm');
+  document.getElementById('orientationBadge').textContent=landscape?'LANDSCAPE':'PORTRAIT';
+  document.documentElement.style.setProperty('--print-orientation',v);
+  let ps=document.getElementById('dynamicPrintStyle');
+  if(!ps){ps=document.createElement('style');ps.id='dynamicPrintStyle';document.head.appendChild(ps);}
+  ps.textContent='@media print{@page{size:A4 '+v+';margin:0}}';
+  if(persist)saveLocal(true);
+  requestAnimationFrame(updatePageCount);
+}
+
+function setOrientation(v){applyOrientation(v,true);}
+function setMargin(v){applyMargin(v,true);}
+function applyMargin(v,persist=true){
+  const n=Math.max(5,Math.min(40,Number(v)||18));
+  document.documentElement.style.setProperty('--margin',n+'mm');
+  marginEl.value=String(n);
+  if(persist)saveLocal(true);
+}
+
+function setZoom(v){
+  const n=Math.max(50,Math.min(150,Number(v)||100));
+  document.getElementById('zoomLabel').textContent=n+'%';
+  document.getElementById('zoom').value=String(n);
+  const page=document.querySelector('.page');
+  if(!page)return;
+  if(innerWidth>800){
+    page.style.transform=`scale(${n/100})`;
+    page.style.marginBottom=(page.offsetHeight*(n/100-1))+'px';
+  }else{
+    page.style.transform='none';
+    page.style.marginBottom='';
+  }
+}
+
+function clearFormat(){
+  const range=quill.getSelection()||{index:0,length:quill.getLength()};
+  if(range.length){
+    quill.removeFormat(range.index,range.length,'user');
+  }else{
+    quill.format('bold',false,'user');
+    quill.format('italic',false,'user');
+    quill.format('underline',false,'user');
+    quill.format('strike',false,'user');
+    quill.format('color',false,'user');
+    quill.format('background',false,'user');
+  }
+  sync();toast('FORMATAÇÃO LIMPA');
+}
+
+function insertBreak(){
+  const range=quill.getSelection(true);
+  quill.insertText(range.index,'\n','user');
+  quill.setSelection(range.index+1,0,'silent');
+  toast('QUEBRA DE LINHA INSERIDA');
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(window.tt);window.tt=setTimeout(()=>t.classList.remove('show'),1600);
+}
+
+window.addEventListener('resize',()=>setZoom(document.getElementById('zoom').value));
+window.addEventListener('beforeprint',()=>setZoom(100));
+
+loadLocal();
+sync();
+setZoom(100);
+</script>
 </body>
 </html>
